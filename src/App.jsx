@@ -5,12 +5,20 @@ import FloorPlan from "./drawing/FloorPlan.jsx";
 import ThreeDrawing from "./fiber/Three.drawing.jsx";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState } from "react";
-import { Button, Container } from "@mui/material";
+import { Button, Container, Typography, Box } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete"
+import ClearIcon from "@mui/icons-material/Clear"
+import DrawIcon from "@mui/icons-material/Draw"
+import ThreeDRotation from '@mui/icons-material/ThreeDRotation';
+import MapIcon from '@mui/icons-material/Map.js';
+
 
 function App() {
   const [page, setPage] = useState("2D");
   const [lines, setLines] = useState([]);
   const [intersectionPoints, setIntersetcionPoints] = useState([]);
+  const [mode, setMode] = useState("drawing")
+  
 
   const handleOnClick = () => {
     if (page === "2D") setPage("3D");
@@ -21,32 +29,62 @@ function App() {
     setLines([]);
   };
 
+
+  const handleChangeMode = (m) => {
+    setMode(m)
+    console.log(mode)
+  }
+
   return (
     <>
-      <Container>
-        {lines[0] ? (
-          <div>
-            <Button variant="contained" onClick={handleOnClick}>
+      <Box
+        width= "100vw"
+        height="45px"
+        position="fixed"
+        zIndex={10}
+        bgcolor= "white"
+        border="2px solid blue"
+        borderRadius="10px"
+        justifyContent="center"
+        alignContent="center"
+      >
+        {
+          <Box
+           margin="1rem"
+          >
+            <Button 
+              variant="contained" 
+              disabled={lines.length === 0} 
+              onClick={handleOnClick} 
+              startIcon={page==="2D"? <ThreeDRotation/> : <MapIcon/> }
+            >
               {page === "2D" ? "3D View" : "2D View"}
             </Button>
             {page === "2D" && (
-              <Button variant="contained" onClick={handleClean}>
-                Clean
-              </Button>
+              <>
+                <Button variant="contained" disabled={mode === "drawing"} onClick={() => {handleChangeMode("drawing")}} startIcon={<DrawIcon/>}>
+                  Draw Line
+                </Button>
+                <Button variant="contained" disabled={mode === "deleting"} onClick={() => {handleChangeMode("deleting")}} startIcon={<DeleteIcon/>}>
+                  Delete Line
+                </Button>
+                <Button variant="contained" disabled={mode === "Moving"} onClick={() => {handleChangeMode("Moving")}} startIcon={<DeleteIcon/>}>
+                  Move Line
+                </Button>
+                <Button variant="contained" onClick={handleClean} startIcon={<ClearIcon/>}>
+                  Clean All
+                </Button>
+              </>
             )}
-          </div>
-        ) : (
-          <div>
-            <p>Draw Blueprint</p>
-          </div>
-        )}
-      </Container>
+            
+          </Box>
+        }
+      </Box>
       {page === "2D" ? (
         <FloorPlan
           lines={lines}
           setLines={setLines}
-          intersectionPoints={intersectionPoints}
-          setIntersetcionPoints={setIntersetcionPoints}
+          mode={mode}
         />
       ) : (
         <ThreeDrawing lines={lines} />

@@ -4,11 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { Stage, Layer, Line, Circle, Text, Label, Tag } from 'react-konva';
 import { v4 as uuidv4 } from 'uuid';
 
-const Floor = ({lines, setLines, intersectionPoints, setIntersetcionPoints}) => {
+const Floor = ({lines, setLines, mode}) => {
    
     const [tempLine, setTempLine] = useState(null);
-    const [selectedLineIndex, setSelectedLineIndex] = useState(null);
     const [drawing, setDrawing] = useState(false); // 新增了一個狀態變量用於標記是否正在繪製線
+    const [deleteMode, setDeleteMode] = useState(false)
+    const [selectedLineIndex, setSelectedLineIndex] = useState(null);
     
     const gridSize = 20;
 
@@ -18,16 +19,19 @@ const Floor = ({lines, setLines, intersectionPoints, setIntersetcionPoints}) => 
     };
 
     const handleMouseDown = (e) => {
-        const stage = e.target.getStage();
-        const mousePos = stage.getPointerPosition();
-        const snappedPos = snapToGrid(mousePos.x, mousePos.y);
-        setDrawing(true);
-        setTempLine([snappedPos[0], snappedPos[1], snappedPos[0], snappedPos[1]]);
+        if( mode === "drawing")
+        {
+            const stage = e.target.getStage();
+            const mousePos = stage.getPointerPosition();
+            const snappedPos = snapToGrid(mousePos.x, mousePos.y);
+            setDrawing(true);
+            setTempLine([snappedPos[0], snappedPos[1], snappedPos[0], snappedPos[1]]);
+        }
     };
 
 
     const handleMouseMove = (e) => {
-        if (drawing) {
+        if (drawing && mode === "drawing") {
             const stage = e.target.getStage();
             const mousePos = stage.getPointerPosition();
             const snappedPos = snapToGrid(mousePos.x, mousePos.y);
@@ -36,7 +40,7 @@ const Floor = ({lines, setLines, intersectionPoints, setIntersetcionPoints}) => 
     };
 
     const handleMouseUp = () => {
-        if (drawing) {
+        if (drawing  && mode === "drawing") {
             setDrawing(false);
             setLines([...lines, tempLine]);
             setTempLine([]);
@@ -73,13 +77,14 @@ const Floor = ({lines, setLines, intersectionPoints, setIntersetcionPoints}) => 
         );
     };
 
-    const deleteSelectedLine = () => {
-        if (selectedLineIndex !== null) {
-            const newLines = lines.filter((_, index) => index !== selectedLineIndex);
-            setLines(newLines);
-            setSelectedLineIndex(null);
+
+    const handleDeleteLine = (index) => {
+        if ( mode === "deleting")
+        {
+            const newLines = lines.filter((_, i) => i !== index)
+            setLines(newLines)
         }
-    };
+    }
     
     // const calculateAngle = (line1, line2) => {
     //     const v1 = { x: line1[2] - line1[0], y: line1[3] - line1[1] };
@@ -148,10 +153,40 @@ const Floor = ({lines, setLines, intersectionPoints, setIntersetcionPoints}) => 
     
      const intersection = findIntersections()
 
-    console.log("Intersection");
-    console.log(intersection);
-    console.log("Lines:");
-    console.log(lines);
+    // console.log("Intersection");
+    // console.log(intersection);
+
+    const handleLineDragStart = (index) => {
+        if( mode === "Moving")
+        setSelectedLineIndex(index);
+    };
+
+    const handleLineDragEnd = (e) => {
+        if(mode === "Moving"){
+            const stage = e.target.getStage();
+            const mousePos = stage.getPointerPosition();
+            const snappedPos = snapToGrid(mousePos.x, mousePos.y);
+    
+            const start = snapToGrid(mousePos.x - ( mousePos.x - lines[selectedLineIndex][0]), mousePos.y - ( mousePos.y - lines[selectedLineIndex][1]))
+            const end = snapToGrid(mousePos.x - ( mousePos.x - lines[selectedLineIndex][2]), mousePos.y - ( mousePos.y - lines[selectedLineIndex][3]))
+
+            const updatedLines = [...lines];
+            updatedLines[selectedLineIndex] = [
+                snappedPos[0] - (lines[selectedLineIndex][2] - lines[selectedLineIndex][0]) / 2,
+                snappedPos[1] - (lines[selectedLineIndex][3] - lines[selectedLineIndex][1]) / 2,
+                snappedPos[0] + (lines[selectedLineIndex][2] - lines[selectedLineIndex][0]) / 2,
+                snappedPos[1] + (lines[selectedLineIndex][3] - lines[selectedLineIndex][1]) / 2
+            ];
+            // updatedLines[selectedLineIndex] = [
+            //     ...start,     
+            //     ...end,
+            // ]
+            console.log("updatedLines")
+            console.log(updatedLines)
+            setLines(updatedLines);
+            setSelectedLineIndex(null);
+        }
+    };
     
 
     return (
@@ -161,16 +196,23 @@ const Floor = ({lines, setLines, intersectionPoints, setIntersetcionPoints}) => 
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
+            
         >
             <Layer>
                 {drawGrid()}
+                {console.log("Lines:")}
+                {console.log(lines)}
                 {lines.map((line, index) => (
                     <>
                         <Line
-                            key={uuidv4()}
+                            key={index}
                             points={line}
                             stroke="blue"
                             strokeWidth={5}
+                            onClick={() => {handleDeleteLine(index)}}
+                            draggable={mode === "Moving" ? true : false}
+                            onDragStart={() => handleLineDragStart(index)}
+                            onDragEnd={handleLineDragEnd}
                         />
                         {drawDimensionLine(line, `${index}-dimension`)}
                     </>
@@ -190,9 +232,10 @@ const Floor = ({lines, setLines, intersectionPoints, setIntersetcionPoints}) => 
                 ))}
                 
                 {/* <Label x={200} y={200} onClick={deleteSelectedLine}>
-                    <Tag fill="white" pointerDirection="down" pointerWidth={10} pointerHeight={10} lineJoin="round" shadowColor="white" />
-                    <Text text="Delete Selected Line" padding={5} fill="black" />
-                </Label> */}
+                        <Tag fill="white" pointerDirection="down" pointerWidth={10} pointerHeight={10} lineJoin="round" shadowColor="white" />
+                        <Text text="Delete Selected Line" padding={5} fill="black" />
+                    </Label> 
+                */}
             </Layer>
         </Stage>
     );

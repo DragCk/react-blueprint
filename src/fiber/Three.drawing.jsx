@@ -7,24 +7,6 @@ import { Canvas } from "@react-three/fiber"
 import * as THREE from "three"
 
 
-// const lines = [
-//     [260, 240, 260, 540],
-//     [260, 540, 740, 540],
-//     [740, 540, 740, 420],
-//     [260, 240, 380, 120],
-//     [380, 120, 740, 120],
-//     [740, 120, 740, 420],
-//     [740, 360, 980, 360],
-//     [980, 360, 980, 540],
-//     [740, 540, 980, 540],
-//     [260, 360, 420, 360],
-//     [420, 360, 420, 540],
-//     [540, 140, 540, 260],
-//     [540, 260, 740, 260],
-//     [540, 140, 540, 120],
-// ]
-
-
 const ThreeDrawing = ({lines}) => {
    
    
@@ -80,7 +62,7 @@ const ThreeDrawing = ({lines}) => {
             <directionalLight position={ [ 1, 2, 3 ] } intensity={ 4.5 } />
             <ambientLight intensity={ 1.5 } />
             
-            <Environment preset="forest" background/>
+            <Environment preset="city" background/>
             
             {/* <gridHelper args={[2000, 2000, 0xff0000, 'teal']} /> */}
 
