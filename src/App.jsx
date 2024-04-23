@@ -16,7 +16,6 @@ import MapIcon from '@mui/icons-material/Map.js';
 function App() {
   const [page, setPage] = useState("2D");
   const [lines, setLines] = useState([]);
-  const [intersectionPoints, setIntersetcionPoints] = useState([]);
   const [mode, setMode] = useState("drawing")
   
 

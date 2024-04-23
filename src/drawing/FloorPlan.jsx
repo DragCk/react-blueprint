@@ -2,6 +2,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import { Stage, Layer, Line, Circle, Text, Label, Tag } from 'react-konva';
+import { update } from 'three/examples/jsm/libs/tween.module.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const Floor = ({lines, setLines, mode}) => {
@@ -10,6 +11,7 @@ const Floor = ({lines, setLines, mode}) => {
     const [drawing, setDrawing] = useState(false); // 新增了一個狀態變量用於標記是否正在繪製線
     const [deleteMode, setDeleteMode] = useState(false)
     const [selectedLineIndex, setSelectedLineIndex] = useState(null);
+    const [mousePosition, setMousePosition] = useState()
     
     const gridSize = 20;
 
@@ -156,27 +158,42 @@ const Floor = ({lines, setLines, mode}) => {
     // console.log("Intersection");
     // console.log(intersection);
 
-    const handleLineDragStart = (index) => {
+    const handleLineDragStart = (e,index) => {
         if( mode === "Moving")
-        setSelectedLineIndex(index);
+        {
+            setSelectedLineIndex(index);
+            const stage = e.target.getStage();
+            const mousePos = stage.getPointerPosition();
+            setMousePosition([mousePos.x, mousePos.y])
+        }
     };
 
     const handleLineDragEnd = (e) => {
         if(mode === "Moving"){
             const stage = e.target.getStage();
             const mousePos = stage.getPointerPosition();
-            const snappedPos = snapToGrid(mousePos.x, mousePos.y);
-    
-            const start = snapToGrid(mousePos.x - ( mousePos.x - lines[selectedLineIndex][0]), mousePos.y - ( mousePos.y - lines[selectedLineIndex][1]))
-            const end = snapToGrid(mousePos.x - ( mousePos.x - lines[selectedLineIndex][2]), mousePos.y - ( mousePos.y - lines[selectedLineIndex][3]))
+            const snappedPos = snapToGrid(mousePos.x , mousePos.y );
+            
+            const mouseDifference = [snappedPos[0] - mousePosition[0], snappedPos[1] - mousePosition[1]]
 
+            // const start = snapToGrid(mousePos.x - ( mousePos.x - lines[selectedLineIndex][0]), mousePos.y - ( mousePos.y - lines[selectedLineIndex][1]))
+            // const end = snapToGrid(mousePos.x - ( mousePos.x - lines[selectedLineIndex][2]), mousePos.y - ( mousePos.y - lines[selectedLineIndex][3]))
+
+            // console.log("SnappedPos")
+            // console.log(snappedPos)
             const updatedLines = [...lines];
             updatedLines[selectedLineIndex] = [
-                snappedPos[0] - (lines[selectedLineIndex][2] - lines[selectedLineIndex][0]) / 2,
-                snappedPos[1] - (lines[selectedLineIndex][3] - lines[selectedLineIndex][1]) / 2,
-                snappedPos[0] + (lines[selectedLineIndex][2] - lines[selectedLineIndex][0]) / 2,
-                snappedPos[1] + (lines[selectedLineIndex][3] - lines[selectedLineIndex][1]) / 2
-            ];
+                lines[selectedLineIndex][0] + mouseDifference[0] ,
+                lines[selectedLineIndex][1] + mouseDifference[1] ,
+                lines[selectedLineIndex][2] + mouseDifference[0] ,
+                lines[selectedLineIndex][3] + mouseDifference[1] ,
+            ]
+            // updatedLines[selectedLineIndex] = [
+            //     snappedPos[0] - (lines[selectedLineIndex][2] - lines[selectedLineIndex][0]) / 2,
+            //     snappedPos[1] - (lines[selectedLineIndex][3] - lines[selectedLineIndex][1]) / 2,
+            //     snappedPos[0] + (lines[selectedLineIndex][2] - lines[selectedLineIndex][0]) / 2,
+            //     snappedPos[1] + (lines[selectedLineIndex][3] - lines[selectedLineIndex][1]) / 2
+            // ];
             // updatedLines[selectedLineIndex] = [
             //     ...start,     
             //     ...end,
@@ -188,6 +205,7 @@ const Floor = ({lines, setLines, mode}) => {
         }
     };
     
+   
 
     return (
         <Stage 
@@ -210,11 +228,10 @@ const Floor = ({lines, setLines, mode}) => {
                             stroke="blue"
                             strokeWidth={5}
                             onClick={() => {handleDeleteLine(index)}}
-                            draggable={mode === "Moving" ? true : false}
-                            onDragStart={() => handleLineDragStart(index)}
-                            onDragEnd={handleLineDragEnd}
+                            // onDragStart={(e) => handleLineDragStart(e,index)}
+                            // onDragEnd={(e) => handleLineDragEnd(e)}
                         />
-                        {drawDimensionLine(line, `${index}-dimension`)}
+                       {drawDimensionLine(line, `${index}-dimension`)}
                     </>
                 ))}
                 {/* {lines.slice(0, -1).map((line, index) => (
