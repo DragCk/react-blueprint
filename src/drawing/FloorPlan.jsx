@@ -158,13 +158,10 @@ const Floor = ({lines, setLines, mode}) => {
     // console.log("Intersection");
     // console.log(intersection);
 
-    const handleLineDragStart = (e,index) => {
+    const handleDragStart = (index) => {
         if( mode === "Moving")
         {
             setSelectedLineIndex(index);
-            const stage = e.target.getStage();
-            const mousePos = stage.getPointerPosition();
-            setMousePosition([mousePos.x, mousePos.y])
         }
     };
 
@@ -205,7 +202,30 @@ const Floor = ({lines, setLines, mode}) => {
         }
     };
     
-   
+   const handleStartDragEnd = (e) => {
+        if( mode === "Moving")
+        {
+            const stage = e.target.getStage();
+            const mousePos = stage.getPointerPosition();
+            const snappedPos = snapToGrid(mousePos.x , mousePos.y );
+            const updateLine = [...lines] 
+            updateLine[selectedLineIndex] = [snappedPos[0], snappedPos[1] , updateLine[selectedLineIndex][2], updateLine[selectedLineIndex][3]]
+            setLines(updateLine)
+        }
+    }
+
+    const handleBackDragEnd = (e) => {
+        if( mode === "Moving")
+        {
+            const stage = e.target.getStage();
+            const mousePos = stage.getPointerPosition();
+            const snappedPos = snapToGrid(mousePos.x , mousePos.y );
+            const updateLine = [...lines] 
+            updateLine[selectedLineIndex] = [updateLine[selectedLineIndex][0], updateLine[selectedLineIndex][1], snappedPos[0], snappedPos[1]]
+            setLines(updateLine)
+        }
+        
+   }
 
     return (
         <Stage 
@@ -228,8 +248,18 @@ const Floor = ({lines, setLines, mode}) => {
                             stroke="blue"
                             strokeWidth={5}
                             onClick={() => {handleDeleteLine(index)}}
-                            // onDragStart={(e) => handleLineDragStart(e,index)}
-                            // onDragEnd={(e) => handleLineDragEnd(e)}
+                        />
+                        <Circle 
+                        key={index+1111} x={line[0]} y={line[1]} radius={5} fill="black"
+                        onDragStart={() => handleDragStart(index)}
+                        onDragEnd={(e) => handleStartDragEnd(e)}
+                        draggable={mode === "Moving" ? true : false}
+                        />
+                        <Circle 
+                        key={index+20000} x={line[2]} y={line[3]} radius={5} fill="black"
+                        onDragStart={() => handleDragStart(index)}
+                        onDragEnd={(e) => handleBackDragEnd(e)}
+                        draggable={mode === "Moving" ? true : false}
                         />
                        {drawDimensionLine(line, `${index}-dimension`)}
                     </>

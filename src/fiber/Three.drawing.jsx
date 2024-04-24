@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
 /* eslint-disable react/no-unknown-property */
 
@@ -5,6 +6,7 @@ import { OrbitControls, Edges, Environment, MeshReflectorMaterial, useTexture } 
 import { Canvas } from "@react-three/fiber"
 import Floor from "./components/Floor"
 import Walls from "./components/Walls"
+import Walls2 from "./components/Walls2"
 
 import * as THREE from "three"
 
@@ -30,7 +32,7 @@ const ThreeDrawing = ({lines}) => {
                     fav:45,
                     near:0.1,
                     far: 3000,
-                    position:[-100, 300, -100],
+                    position:[1, 30, -1],
                 }}
             >
           
@@ -51,7 +53,8 @@ const ThreeDrawing = ({lines}) => {
                 )
             })}
             
-
+            
+           
             </Canvas>
         </>
 

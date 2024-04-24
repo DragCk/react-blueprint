@@ -1,9 +1,10 @@
+/* eslint-disable react/no-unknown-property */
 /* eslint-disable react/prop-types */
 
 import { Edges, useTexture } from "@react-three/drei"
 import * as THREE from "three"
 
-const Walls = ({line, key, originPositionX, originPositionZ}) => {
+const Walls = ({line, originPositionX, originPositionZ}) => {
     const floorTexture = useTexture({
         map: "./textures/raw_plank_wall_diff_1k.jpg",
         aoMap: "./textures/raw_plank_wall_arm_1k.jpg",
@@ -12,7 +13,10 @@ const Walls = ({line, key, originPositionX, originPositionZ}) => {
 
     })
 
-    const wallHeight = 100
+    
+    
+
+    const wallHeight = 10
 
     function getVertices (line) {
     
@@ -24,13 +28,13 @@ const Walls = ({line, key, originPositionX, originPositionZ}) => {
             // Math.abs(originPositionX-line[0]), 0, Math.abs(originPositionZ- line[1]) ,
             // Math.abs(originPositionX-line[2]), wallHeight, Math.abs(originPositionZ- line[3]) ,
             // Math.abs(originPositionX-line[2]), 0, Math.abs(originPositionZ- line[3]) ,
-            originPositionX-line[0], 0, originPositionZ- line[1] ,
-            originPositionX-line[0], wallHeight, originPositionZ - line[1],
-            originPositionX-line[2], wallHeight, originPositionZ - line[3] ,
+          (originPositionX-line[0])/10, 0, (originPositionZ- line[1])/10 ,
+          (originPositionX-line[0])/10, wallHeight, (originPositionZ - line[1])/10,
+          (originPositionX-line[2])/10, wallHeight, (originPositionZ - line[3])/10 ,
         
-            originPositionX-line[0], 0, originPositionZ- line[1] ,
-            originPositionX-line[2], wallHeight, originPositionZ- line[3] ,
-            originPositionX-line[2], 0, originPositionZ- line[3] ,
+          (originPositionX-line[0])/10, 0, (originPositionZ- line[1])/10 ,
+          (originPositionX-line[2])/10, wallHeight, (originPositionZ- line[3])/10 ,
+          (originPositionX-line[2])/10, 0, (originPositionZ- line[3])/10 ,
         ]);
         
         return vertices
@@ -39,13 +43,13 @@ const Walls = ({line, key, originPositionX, originPositionZ}) => {
 
     return (
 
-        <mesh key={key}>                          
+        <mesh >                          
             <bufferGeometry attach="geometry">
                 <bufferAttribute attach="attributes-position" array={getVertices(line)} itemSize={3} count={6} />
             </bufferGeometry>
-            <meshBasicMaterial 
-                color="gray"
-
+            <meshStandardMaterial 
+                color="#eab676"
+                // {...floorTexture}
                 side={THREE.DoubleSide}
                 
             />
