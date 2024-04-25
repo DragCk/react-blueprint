@@ -16,12 +16,14 @@ const Floor = ({lines, setLines, mode}) => {
     const gridSize = 20;
 
 
+    /* ----------Drawing lines----------- */
+
     const snapToGrid = (x, y) => {
         return [Math.round(x / gridSize) * gridSize, Math.round(y / gridSize) * gridSize];
     };
 
     const handleMouseDown = (e) => {
-        if( mode === "drawing")
+        if( mode === "Drawing")
         {
             const stage = e.target.getStage();
             const mousePos = stage.getPointerPosition();
@@ -33,7 +35,7 @@ const Floor = ({lines, setLines, mode}) => {
 
 
     const handleMouseMove = (e) => {
-        if (drawing && mode === "drawing") {
+        if (drawing && mode === "Drawing") {
             const stage = e.target.getStage();
             const mousePos = stage.getPointerPosition();
             const snappedPos = snapToGrid(mousePos.x, mousePos.y);
@@ -42,12 +44,16 @@ const Floor = ({lines, setLines, mode}) => {
     };
 
     const handleMouseUp = () => {
-        if (drawing  && mode === "drawing") {
+        if (drawing  && mode === "Drawing") {
             setDrawing(false);
-            setLines([...lines, tempLine]);
+
+            if(tempLine[0] !== tempLine[2] || tempLine[1] !== tempLine[3])  setLines([...lines, tempLine]);
             setTempLine([]);
         }
     };
+
+
+    /* ----------Draw Grid----------- */
 
     const drawGrid = () => {
         const grid = [];
@@ -62,6 +68,8 @@ const Floor = ({lines, setLines, mode}) => {
         return grid;
     };
 
+
+    /* ----------Draw length of Line----------- */
     const calculateLength = (line) => {
         const dx = line[2] - line[0];
         const dy = line[3] - line[1];
@@ -74,11 +82,21 @@ const Floor = ({lines, setLines, mode}) => {
         
         return (
             <>
-               {length !== "NaN" && length !== "0" ?  <Text x={midPoint[0]+4} y={midPoint[1]+4} text={`${length} mm`} fontSize={15} fill="black" /> : null}
+               {length !== "NaN" && length !== "0" ? 
+               (//<Text x={midPoint[0]+4} y={midPoint[1]+4} text={`${length} mm`} fontSize={15} fill="black" />
+            
+               <Label x={midPoint[0]-25} y={midPoint[1]-10} >
+                    <Tag fill="white" lineJoin="round" cornerRadius={10} />
+                    <Text text={`${length}mm`} padding={5} fill="black" />
+                </Label> 
+                )
+               
+               : null}
             </>
         );
     };
 
+    /* ----------Deleting Lines----------- */
 
     const handleDeleteLine = (index) => {
         if ( mode === "deleting")
@@ -117,8 +135,7 @@ const Floor = ({lines, setLines, mode}) => {
     // };
 
 
-
-
+    /* ----------Intersections----------- */
     const findIntersections = () => {
         const intersections = [];
       
@@ -149,15 +166,13 @@ const Floor = ({lines, setLines, mode}) => {
         });
         
         return intersections;
-      };
+    };
+
       
-    
-    
-     const intersection = findIntersections()
+    const intersection = findIntersections()
 
-    // console.log("Intersection");
-    // console.log(intersection);
 
+    /* ----------Line Dragging by point----------- */
     const handleDragStart = (index) => {
         if( mode === "Moving")
         {
@@ -202,30 +217,30 @@ const Floor = ({lines, setLines, mode}) => {
         }
     };
     
-   const handleStartDragEnd = (e) => {
-        if( mode === "Moving")
-        {
-            const stage = e.target.getStage();
-            const mousePos = stage.getPointerPosition();
-            const snappedPos = snapToGrid(mousePos.x , mousePos.y );
-            const updateLine = [...lines] 
-            updateLine[selectedLineIndex] = [snappedPos[0], snappedPos[1] , updateLine[selectedLineIndex][2], updateLine[selectedLineIndex][3]]
-            setLines(updateLine)
-        }
+    const handleStartDragEnd = (e) => {
+            if( mode === "Moving")
+            {
+                const stage = e.target.getStage();
+                const mousePos = stage.getPointerPosition();
+                const snappedPos = snapToGrid(mousePos.x , mousePos.y );
+                const updateLine = [...lines] 
+                updateLine[selectedLineIndex] = [snappedPos[0], snappedPos[1] , updateLine[selectedLineIndex][2], updateLine[selectedLineIndex][3]]
+                setLines(updateLine)
+            }
     }
 
     const handleBackDragEnd = (e) => {
-        if( mode === "Moving")
-        {
-            const stage = e.target.getStage();
-            const mousePos = stage.getPointerPosition();
-            const snappedPos = snapToGrid(mousePos.x , mousePos.y );
-            const updateLine = [...lines] 
-            updateLine[selectedLineIndex] = [updateLine[selectedLineIndex][0], updateLine[selectedLineIndex][1], snappedPos[0], snappedPos[1]]
-            setLines(updateLine)
-        }
-        
-   }
+            if( mode === "Moving")
+            {
+                const stage = e.target.getStage();
+                const mousePos = stage.getPointerPosition();
+                const snappedPos = snapToGrid(mousePos.x , mousePos.y );
+                const updateLine = [...lines] 
+                updateLine[selectedLineIndex] = [updateLine[selectedLineIndex][0], updateLine[selectedLineIndex][1], snappedPos[0], snappedPos[1]]
+                setLines(updateLine)
+            }
+            
+    }
 
     return (
         <Stage 

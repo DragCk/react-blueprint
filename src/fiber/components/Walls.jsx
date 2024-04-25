@@ -5,29 +5,19 @@ import { Edges, useTexture } from "@react-three/drei"
 import * as THREE from "three"
 
 const Walls = ({line, originPositionX, originPositionZ}) => {
-    const floorTexture = useTexture({
-        map: "./textures/raw_plank_wall_diff_1k.jpg",
-        aoMap: "./textures/raw_plank_wall_arm_1k.jpg",
-        displacementmap:"./textures/raw_plank_wall_disp_1k.jpg",
-        normalMap: "./textures/raw_plank_wall_nor_gl_1k.jpg"
-
+    const wallTexture = useTexture({
+        map: "./wallTexture/medieval_red_brick_diff_1k.jpg",
+        aoMap: "./wallTexture/medieval_red_brick_arm_1k.jpg",
+        displacementmap:"./wallTexture/medieval_red_brick_disp_1k.jpg",
+        normalMap: "./wallTexture/medieval_red_brick_nor_gl_1k.jpg"
     })
 
-    
-    
 
     const wallHeight = 10
 
     function getVertices (line) {
     
         const vertices = new Float32Array( [
-            // Math.abs(originPositionX-line[0]), 0, Math.abs(originPositionZ- line[1]) ,
-            // Math.abs(originPositionX-line[0]), wallHeight, Math.abs(originPositionZ - line[1]),
-            // Math.abs(originPositionX-line[2]), wallHeight, Math.abs(originPositionZ - line[3]) ,
-        
-            // Math.abs(originPositionX-line[0]), 0, Math.abs(originPositionZ- line[1]) ,
-            // Math.abs(originPositionX-line[2]), wallHeight, Math.abs(originPositionZ- line[3]) ,
-            // Math.abs(originPositionX-line[2]), 0, Math.abs(originPositionZ- line[3]) ,
           (originPositionX-line[0])/10, 0, (originPositionZ- line[1])/10 ,
           (originPositionX-line[0])/10, wallHeight, (originPositionZ - line[1])/10,
           (originPositionX-line[2])/10, wallHeight, (originPositionZ - line[3])/10 ,
@@ -40,16 +30,18 @@ const Walls = ({line, originPositionX, originPositionZ}) => {
         return vertices
     }
 
+    
 
     return (
 
         <mesh >                          
             <bufferGeometry attach="geometry">
-                <bufferAttribute attach="attributes-position" array={getVertices(line)} itemSize={3} count={6} />
+                <bufferAttribute attach="attributes-position" array={getVertices(line)}  itemSize={3} count={6} />
             </bufferGeometry>
             <meshStandardMaterial 
                 color="#eab676"
-                // {...floorTexture}
+                attach="material"
+                // {...wallTexture}
                 side={THREE.DoubleSide}
                 
             />

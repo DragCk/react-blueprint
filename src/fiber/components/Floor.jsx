@@ -13,20 +13,22 @@ const Floor = () => {
     })
 
     return (
-        <mesh rotation-x={-Math.PI * 0.5} position={[0, -0.1 , 0]} scale={1.5} >
-                <planeGeometry args={[100, 100]} />
+        <mesh rotation-x={-Math.PI * 0.5} position={[0, -0.1 , 0]} scale={1} >
+                <planeGeometry args={[200, 200]} />
                 <MeshReflectorMaterial
                     {...floorTexture}
-                    blur={[300, 100]}
-                    resolution={512}
-                    mixBlur={1}
-                    mixStrength={80}
+                    blur={[50, 50]}
+                    resolution={1024}
+                    mixBlur={0.5}
+                    mixStrength={100}
                     roughness={1}
-                    depthScale={1.2}
+                    depthScale={1}
                     minDepthThreshold={0.4}
                     maxDepthThreshold={1.4}
                     color="#050505"
-                    metalness={0.5} />
+                    metalness={0}
+                    mirror={1}
+                    />
         
             </mesh>
     )

@@ -16,7 +16,7 @@ import MapIcon from '@mui/icons-material/Map.js';
 function App() {
   const [page, setPage] = useState("2D");
   const [lines, setLines] = useState([]);
-  const [mode, setMode] = useState("drawing")
+  const [mode, setMode] = useState("Drawing")
   
 
   const handleOnClick = () => {
@@ -25,6 +25,7 @@ function App() {
   };
 
   const handleClean = () => {
+    setMode("Drawing")
     setLines([]);
   };
 
@@ -61,7 +62,7 @@ function App() {
             </Button>
             {page === "2D" && (
               <>
-                <Button variant="contained" disabled={mode === "drawing"} onClick={() => {handleChangeMode("drawing")}} startIcon={<DrawIcon/>}>
+                <Button variant="contained" disabled={mode === "Drawing"} onClick={() => {handleChangeMode("Drawing")}} startIcon={<DrawIcon/>}>
                   Draw Line
                 </Button>
                 <Button variant="contained" disabled={mode === "deleting"} onClick={() => {handleChangeMode("deleting")}} startIcon={<DeleteIcon/>}>
