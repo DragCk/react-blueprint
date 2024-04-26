@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { Line, Circle } from 'react-konva';
 import React from 'react';
 

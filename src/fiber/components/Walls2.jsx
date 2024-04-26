@@ -20,7 +20,7 @@ const Walls2 = ({line, key, originPositionX, originPositionZ}) => {
     floorTexture.map.repeat.set( 1 / 10, 1 / 10 );
     floorTexture.map.offset.set( 0,0 );
 
-    const wallHeight = 100
+    
 
 
     const shape = new THREE.Shape()
@@ -36,24 +36,6 @@ const Walls2 = ({line, key, originPositionX, originPositionZ}) => {
         bevelEnabled: false,
     }
 
-    const getExtrudeShape = (line) => {
-        
-        const shape = new THREE.Shape()
-        shape.moveTo(0, 0)
-        shape.lineTo(10, 0)
-        shape.lineTo(10, 10)
-        shape.lineTo(0, 10)
-        shape.lineTo(0, 0)
-
-        const extrudeSettings = {
-            steps: 50,
-            depth: 0.25,
-            bevelEnabled: false,
-        }
-        
-
-        return [shape, extrudeSettings]
-    }
 
     return (
         <>

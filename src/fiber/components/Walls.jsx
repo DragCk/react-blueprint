@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react/no-unknown-property */
 /* eslint-disable react/prop-types */
 
@@ -42,6 +43,7 @@ const Walls = ({line, originPositionX, originPositionZ}) => {
                 color="#eab676"
                 attach="material"
                 // {...wallTexture}
+               
                 side={THREE.DoubleSide}
                 
             />
