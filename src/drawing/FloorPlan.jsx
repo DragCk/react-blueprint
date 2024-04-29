@@ -2,7 +2,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import { Stage, Layer, Line, Circle, Text, Label, Tag } from 'react-konva';
-import { update } from 'three/examples/jsm/libs/tween.module.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const Floor = ({lines, setLines, mode}) => {
@@ -11,9 +10,7 @@ const Floor = ({lines, setLines, mode}) => {
     const [drawing, setDrawing] = useState(false); // 新增了一個狀態變量用於標記是否正在繪製線
     const [selectedLineIndex, setSelectedLineIndex] = useState(null);
     
-    
     const gridSize = 20;
-
 
     /* ----------Drawing lines----------- */
 
@@ -57,7 +54,6 @@ const Floor = ({lines, setLines, mode}) => {
         }
     };
 
-
     /* ----------Draw Grid----------- */
 
     const drawGrid = () => {
@@ -72,7 +68,6 @@ const Floor = ({lines, setLines, mode}) => {
 
         return grid;
     };
-
 
     /* ----------Draw length of Line----------- */
     const calculateLength = (line) => {
@@ -90,7 +85,7 @@ const Floor = ({lines, setLines, mode}) => {
                {length !== "NaN" && length !== "0" ? 
                (//<Text x={midPoint[0]+4} y={midPoint[1]+4} text={`${length} mm`} fontSize={15} fill="black" />
             
-               <Label x={midPoint[0]-22} y={midPoint[1]-7} key={`${index}-dimension`} onClick={() => handleDeleteLine(index)}>
+               <Label x={midPoint[0]-22} y={midPoint[1]-7} key={`${index}-dimension`} onClick={() => handleDeleteLine(index)} >
                     <Tag fill="white" lineJoin="round" cornerRadius={10} />
                     <Text text={`${length}mm`} padding={2} fill="black" />
                 </Label> 
@@ -138,7 +133,6 @@ const Floor = ({lines, setLines, mode}) => {
     //         />
     //     );
     // };
-
 
     /* ----------Intersections on start & end point-------------- */
     const findPointIntersections = () => {
@@ -204,9 +198,7 @@ const Floor = ({lines, setLines, mode}) => {
         return intersections;
     };
 
-      
     const intersection = findIntersections()
-
 
     /* ----------Line Dragging by point----------- */
     const handleDragStart = (index) => {
@@ -216,53 +208,31 @@ const Floor = ({lines, setLines, mode}) => {
         }
     };
 
-    // const handleLineDragEnd = (e) => {
-    //     if(mode === "Moving"){
-    //         const stage = e.target.getStage();
-    //         const mousePos = stage.getPointerPosition();
-    //         const snappedPos = snapToGrid(mousePos.x , mousePos.y );
-            
-    //         const mouseDifference = [snappedPos[0] - mousePosition[0], snappedPos[1] - mousePosition[1]]
-
-    //         const updatedLines = [...lines];
-    //         updatedLines[selectedLineIndex] = [
-    //             lines[selectedLineIndex][0] + mouseDifference[0] ,
-    //             lines[selectedLineIndex][1] + mouseDifference[1] ,
-    //             lines[selectedLineIndex][2] + mouseDifference[0] ,
-    //             lines[selectedLineIndex][3] + mouseDifference[1] ,
-    //         ]
-            
-    //         console.log("updatedLines")
-    //         console.log(updatedLines)
-    //         setLines(updatedLines);
-    //         setSelectedLineIndex(null);
-    //     }
-    // };
-    
-    const handleStartDragEnd = (e) => {
-            if( mode === "Moving")
-            {
-                const stage = e.target.getStage();
-                const mousePos = stage.getPointerPosition();
-                const snappedPos = snapToGrid(mousePos.x , mousePos.y );
-                const updateLine = [...lines] 
-                updateLine[selectedLineIndex] = [snappedPos[0], snappedPos[1] , updateLine[selectedLineIndex][2], updateLine[selectedLineIndex][3]]
-                setLines(updateLine)
-            }
-    }
-
-    const handleBackDragEnd = (e) => {
-            if( mode === "Moving")
-            {
-                const stage = e.target.getStage();
-                const mousePos = stage.getPointerPosition();
-                const snappedPos = snapToGrid(mousePos.x , mousePos.y );
-                const updateLine = [...lines] 
-                updateLine[selectedLineIndex] = [updateLine[selectedLineIndex][0], updateLine[selectedLineIndex][1], snappedPos[0], snappedPos[1]]
-                setLines(updateLine)
-            }
+    const handleDragEnd = (e, position) => {
+        if( mode === "Moving"){
+            const {x, y} = e.target.attrs
+            const snappedPos = snapToGrid(x , y);
+            const updateLine = [...lines] 
+            if(position === "start")
+            {updateLine[selectedLineIndex] = [snappedPos[0], snappedPos[1] , updateLine[selectedLineIndex][2], updateLine[selectedLineIndex][3]]}
+            if( position === "end")
+            {updateLine[selectedLineIndex] = [updateLine[selectedLineIndex][0], updateLine[selectedLineIndex][1], snappedPos[0], snappedPos[1]]}
+            setLines(updateLine)
+        }
             
     }
+
+    const handleIntersectionStart = () => {
+
+    }
+
+    const handleLineMove = (e, index) => {
+        const {x, y} = e.target.attrs
+        console.log(e.target.absolutePosition())
+        console.log(`Line: x: ${x}, y:${y}`)
+        
+    }
+
 
     return (
         <Stage 
@@ -274,8 +244,6 @@ const Floor = ({lines, setLines, mode}) => {
         >
             <Layer>
                 {drawGrid()}
-                {console.log("Lines:")}
-                {console.log(lines)}
                 {lines.map((line, index) => (
                     <>
                         <Line
@@ -284,21 +252,23 @@ const Floor = ({lines, setLines, mode}) => {
                             stroke="blue"
                             strokeWidth={5}
                             onClick={() => handleDeleteLine(index)}
+                            draggable
+                            onDragMove={(e) => handleLineMove(e, index)}
                             
                         />
                         <Circle 
-                            key={`${index}-start`} x={line[0]} y={line[1]} radius={3} fill="black"
+                            key={`${index}-start`} x={line[0]} y={line[1]} radius={5} fill="black"
                             onDragStart={() => handleDragStart(index)}
-                            onDragEnd={(e) => handleStartDragEnd(e)}
+                            onDragEnd={(e) => handleDragEnd(e,"start")}
                             draggable={mode === "Moving" ? true : false}
                         />
                         <Circle 
                             key={`${index}-end`} x={line[2]} y={line[3]} radius={5} fill="black"
                             onDragStart={() => handleDragStart(index)}
-                            onDragEnd={(e) => handleBackDragEnd(e)}
+                            onDragEnd={(e) => handleDragEnd(e,"end")}
                             draggable={mode === "Moving" ? true : false}
                         />
-                       {drawDimensionLine(line, index)}
+                        {drawDimensionLine(line, index)}
                     </>
                 ))}
                 {/* {lines.slice(0, -1).map((line, index) => (
@@ -311,10 +281,16 @@ const Floor = ({lines, setLines, mode}) => {
                         {/* {lines.length > 0 && drawAngle(lines[lines.length - 1], tempLine)} */}
                     </React.Fragment>
                 )}
-                {intersection.map((point, i) => (
+
+                {/* {intersection.map((point, i) => (
                     <Circle key={`${i}-intersection`} x={point.x} y={point.y} radius={5} fill="red" />
-                ))}
+                ))} */}
                 
+
+                {points.map((point, index) => (
+                <Circle key={`${index}-points`} x={point.x} y={point.y} radius={5} fill="red" />
+                ))}
+
                 {/* <Label x={200} y={200} onClick={deleteSelectedLine}>
                         <Tag fill="white" pointerDirection="down" pointerWidth={10} pointerHeight={10} lineJoin="round" shadowColor="white" />
                         <Text text="Delete Selected Line" padding={5} fill="black" />

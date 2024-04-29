@@ -1,5 +1,5 @@
 import { Stage, Layer, Line, Circle} from 'react-konva';
-import Grid from './Grid';
+import Grid from './components/Grid';
 import { useState, useEffect } from "react"
 
 const EngineeringDrawing = () => {
