@@ -9,6 +9,9 @@ const Floor = ({lines, setLines, mode}) => {
     const [tempLine, setTempLine] = useState(null);
     const [drawing, setDrawing] = useState(false); // 新增了一個狀態變量用於標記是否正在繪製線
     const [selectedLineIndex, setSelectedLineIndex] = useState(null);
+    const [selectedIntersectionPoint, setSelectedIntersectionPoint] = useState({x:0, y:0})
+    const [lineMoving, setLineMoving] = useState(false)
+    const [tempintersection, setTempIntersection] = useState({x:0, y:0})
     
     const gridSize = 20;
 
@@ -59,11 +62,13 @@ const Floor = ({lines, setLines, mode}) => {
     const drawGrid = () => {
         const grid = [];
         for (let i = 0; i < window.innerWidth; i += gridSize) {
-            grid.push(<Line points={[i, 0, i, window.innerHeight]} stroke="#ddd" strokeWidth={0.5} />);
+            const strokesWidth = i % (gridSize * 5) === 0 ? 2 : 0.5
+            grid.push(<Line points={[i, 0, i, window.innerHeight]} stroke="#ddd" strokeWidth={strokesWidth} />);
         }
 
         for (let i = 0; i < window.innerHeight; i += gridSize) {
-            grid.push(<Line points={[0, i, window.innerWidth, i]} stroke="#ddd" strokeWidth={0.5} />);
+            const strokesWidth = i % (gridSize * 5) === 0 ? 2 : 0.5
+            grid.push(<Line points={[0, i, window.innerWidth, i]} stroke="#ddd" strokeWidth={strokesWidth} />);
         }
 
         return grid;
@@ -208,29 +213,106 @@ const Floor = ({lines, setLines, mode}) => {
         }
     };
 
+    const handleOnDrag = (e, position) => {
+        if( mode === "Moving"){
+            const {x, y} = e.target.attrs
+            
+            const updateLine = [...lines] 
+            if(position === "start")
+            {updateLine[selectedLineIndex] = [x, y, updateLine[selectedLineIndex][2], updateLine[selectedLineIndex][3]]}
+            if( position === "end")
+            {updateLine[selectedLineIndex] = [updateLine[selectedLineIndex][0], updateLine[selectedLineIndex][1], x, y]}
+            setLines(updateLine)
+        }
+    }
+
     const handleDragEnd = (e, position) => {
         if( mode === "Moving"){
             const {x, y} = e.target.attrs
-            const snappedPos = snapToGrid(x , y);
+            const snappedPos = snapToGrid(x, y);
             const updateLine = [...lines] 
             if(position === "start")
             {updateLine[selectedLineIndex] = [snappedPos[0], snappedPos[1] , updateLine[selectedLineIndex][2], updateLine[selectedLineIndex][3]]}
             if( position === "end")
             {updateLine[selectedLineIndex] = [updateLine[selectedLineIndex][0], updateLine[selectedLineIndex][1], snappedPos[0], snappedPos[1]]}
             setLines(updateLine)
+            setSelectedLineIndex(null)
         }
             
     }
 
-    const handleIntersectionStart = () => {
 
+    
+    const handleIntersectionMouseDown = (e) => {
+        if(mode === "Moving"){
+            
+            const {x, y} = e.target.attrs
+            setSelectedIntersectionPoint({x, y})
+            setLineMoving(true)
+        }
     }
 
+    const handleIntesectionMouseMove = (e) => {
+        if(lineMoving) {
+            console.log("Movingggg")
+            const {x, y} = e.target.attrs
+            
+            const updateLines = [...lines]
+            updateLines.map((line) =>{
+                if(line[0] <= selectedIntersectionPoint.x + 5 && line[0] >= selectedIntersectionPoint.x - 5){
+                    if(line[1] <= selectedIntersectionPoint.y + 5 && line[1] >= selectedIntersectionPoint.y - 5)
+                    {
+                        line[0] = x
+                        line[1] = y
+                    }
+                } 
+                if(line[2] <= selectedIntersectionPoint.x + 5 && line[2] >= selectedIntersectionPoint.x - 5){
+                    if(line[3] <= selectedIntersectionPoint.y + 5 && line[3] >= selectedIntersectionPoint.y - 5)
+                { 
+                        line[2] = x
+                        line[3] = y
+                    }
+                } 
+            })
+            setLines(updateLines)  
+        }
+    } 
+
+
+    const hadleIntersectionMouseUp = (e) => {
+        
+        if(lineMoving){
+            console.log(selectedIntersectionPoint)
+            const {x, y} = e.target.attrs
+            const snappedPos = snapToGrid(x , y);
+            const updateLines = [...lines]
+            updateLines.map((line) =>{
+                if(line[0] <= selectedIntersectionPoint.x + 5 && line[0] >= selectedIntersectionPoint.x - 5){
+                    if(line[1] <= selectedIntersectionPoint.y + 5 && line[1] >= selectedIntersectionPoint.y - 5)
+                    {
+                        line[0] = snappedPos[0]
+                        line[1] = snappedPos[1]
+                    }
+                } 
+                if(line[2] <= selectedIntersectionPoint.x + 5 && line[2] >= selectedIntersectionPoint.x - 5){
+                    if(line[3] <= selectedIntersectionPoint.y + 5 && line[3] >= selectedIntersectionPoint.y - 5)
+                { 
+                        line[2] = snappedPos[0]
+                        line[3] = snappedPos[1]
+                    }
+                } 
+            })
+            setLines(updateLines)
+            setLineMoving(false)
+        }
+        
+    }
+
+    /* ----------Line Dragging by Body----------- */
     const handleLineMove = (e, index) => {
         const {x, y} = e.target.attrs
         console.log(e.target.absolutePosition())
         console.log(`Line: x: ${x}, y:${y}`)
-        
     }
 
 
@@ -252,21 +334,23 @@ const Floor = ({lines, setLines, mode}) => {
                             stroke="blue"
                             strokeWidth={5}
                             onClick={() => handleDeleteLine(index)}
-                            draggable
-                            onDragMove={(e) => handleLineMove(e, index)}
-                            
+
                         />
                         <Circle 
                             key={`${index}-start`} x={line[0]} y={line[1]} radius={5} fill="black"
                             onDragStart={() => handleDragStart(index)}
+                            onDragMove={(e) => handleOnDrag(e,"start") }
                             onDragEnd={(e) => handleDragEnd(e,"start")}
                             draggable={mode === "Moving" ? true : false}
+                            
                         />
                         <Circle 
                             key={`${index}-end`} x={line[2]} y={line[3]} radius={5} fill="black"
                             onDragStart={() => handleDragStart(index)}
+                            onDragMove={(e) => handleOnDrag(e,"end") }
                             onDragEnd={(e) => handleDragEnd(e,"end")}
                             draggable={mode === "Moving" ? true : false}
+                            
                         />
                         {drawDimensionLine(line, index)}
                     </>
@@ -288,7 +372,17 @@ const Floor = ({lines, setLines, mode}) => {
                 
 
                 {points.map((point, index) => (
-                <Circle key={`${index}-points`} x={point.x} y={point.y} radius={5} fill="red" />
+                <Circle 
+                    key={`${index}-points`} 
+                    x={point.x}
+                    y={point.y} 
+                    radius={6} 
+                    fill="red" 
+                    draggable={mode === "Moving" ? true : false}
+                    onDragStart={handleIntersectionMouseDown}
+                    
+                    onDragEnd={hadleIntersectionMouseUp}
+                    />
                 ))}
 
                 {/* <Label x={200} y={200} onClick={deleteSelectedLine}>

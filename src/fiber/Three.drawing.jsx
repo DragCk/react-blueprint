@@ -2,21 +2,66 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/no-unknown-property */
 
-import { OrbitControls, Edges, Environment, MeshReflectorMaterial, useTexture } from "@react-three/drei"
+import { OrbitControls, Environment, MeshReflectorMaterial, useTexture } from "@react-three/drei"
 import { Canvas } from "@react-three/fiber"
 import Floor from "./components/Floor"
 import Walls from "./components/Walls"
 import Walls2 from "./components/Walls2"
+
 
 import * as THREE from "three"
 
 
 const ThreeDrawing = ({lines}) => {
    
-    const originPositionX = lines[0][0]
-    const originPositionZ = lines[0][1]
     console.log("thist is three")
     console.log(lines)
+
+    function findClosedShapes(coordinates) {
+        const adjacencyList = new Map();
+      
+        // 創建連接表
+        coordinates.forEach(([x1, y1, x2, y2]) => {
+          if (!adjacencyList.has(`${x1},${y1}`)) {
+            adjacencyList.set(`${x1},${y1}`, []);
+          }
+          if (!adjacencyList.has(`${x2},${y2}`)) {
+            adjacencyList.set(`${x2},${y2}`, []);
+          }
+          adjacencyList.get(`${x1},${y1}`).push(`${x2},${y2}`);
+          adjacencyList.get(`${x2},${y2}`).push(`${x1},${y1}`);
+        });
+      
+        const closedShapes = [];
+      
+        // DFS 遍歷圖形
+        function dfs(node, visited, shape) {
+          visited.add(node);
+          shape.push(node.split(","));
+          adjacencyList.get(node).forEach(neighbor => {
+            if (!visited.has(neighbor)) {
+              dfs(neighbor, visited, shape);
+            }
+          });
+        }
+      
+        const visited = new Set();
+        adjacencyList.forEach((_, node) => {
+          if (!visited.has(node)) {
+            const shape = [];
+            dfs(node, visited, shape);
+            if (shape.length > 2) {
+              closedShapes.push(shape);
+            }
+          }
+        });
+      
+        return closedShapes;
+      }
+      
+
+    const closedShapes = findClosedShapes(lines);
+    console.log("形成閉合圖形的座標:", closedShapes);
 
     const findIntersections = () => {
         const intersections = [];
@@ -51,9 +96,36 @@ const ThreeDrawing = ({lines}) => {
     };
 
     const intersection = findIntersections()
-    console.log(intersection)
 
 
+    const findCenterOfScene = (points) => {
+        if (points.length === 0) return { x: 0, y: 0 };
+
+        // 初始化總和
+        let sumX = 0;
+        let sumY = 0;
+
+        // 將所有點的座標加總
+        for (let i = 0; i < points.length; i++) {
+            sumX += points[i].x;
+            sumY += points[i].y;
+        }
+
+        // 計算平均值
+        const centerX = sumX / points.length;
+        const centerY = sumY / points.length;
+
+        return { x: centerX, y: centerY };
+    }
+
+    const center = findCenterOfScene(intersection)
+    
+    console.log("center")
+    console.log(center)
+    const originPositionX = center.x ? center.x : lines[0][0]
+    const originPositionZ = center.y ? center.y : lines[0][1]
+    console.log(originPositionX)
+    console.log(originPositionZ)
     return (
         <>
             <Canvas
@@ -66,30 +138,43 @@ const ThreeDrawing = ({lines}) => {
                     fav:45,
                     near:0.1,
                     far: 3000,
-                    position:[1, 30, -1],
+                    position:[0, 30, -10],
                 }}
             >
-          
-        
 
             <OrbitControls makeDefault enableDamping />
 
-            <directionalLight position={ [ 1, 2, 3 ] } intensity={ 4.5 } />
+            <directionalLight position={ [ 10, 20, 30 ] } intensity={ 4.5 } />
             <ambientLight intensity={ 1.5 } />
             
-            <Environment preset="city" background/>
+            <Environment preset="city" />
             
-            <Floor/>
             
-            <group >
+            
+            {/* <group >
                 {lines.map((line, index) => {
                     return (
                         <Walls line={line} key={index} originPositionX={originPositionX} originPositionZ={originPositionZ} />
                     )
                 })}
+            </group> */}
+           
+            <group rotation-x={Math.PI * 0.5}>
+                {lines.map((line, index) => {
+                    return (
+                        <Walls2 line={line} key={index} originPositionX={originPositionX} originPositionZ={originPositionZ}/>
+                    )
+                })}
+                {closedShapes && closedShapes.map((closeShape, index) => {
+                    return(
+                        <Floor closeShape={closeShape} key={index} originPositionX={originPositionX} originPositionZ={originPositionZ} />
+                    )
+            })}
+                
             </group>
            
-           
+            
+
             </Canvas>
         </>
 

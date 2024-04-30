@@ -6,7 +6,7 @@ import { Edges, useTexture} from "@react-three/drei"
 import * as THREE from "three"
 
 // eslint-disable-next-line no-unused-vars
-const Walls2 = ({line, key, originPositionX, originPositionZ}) => {
+const Walls2 = ({line, index, originPositionX, originPositionZ}) => {
     const floorTexture = useTexture({
         map: "./textures/raw_plank_wall_diff_1k.jpg",
         aoMap: "./textures/raw_plank_wall_arm_1k.jpg",
@@ -20,30 +20,27 @@ const Walls2 = ({line, key, originPositionX, originPositionZ}) => {
     floorTexture.map.repeat.set( 1 / 10, 1 / 10 );
     floorTexture.map.offset.set( 0,0 );
 
-    
-
 
     const shape = new THREE.Shape()
-    shape.moveTo(0, 0)
-    shape.lineTo(0, 0)
-    shape.lineTo(0, 10)
-    shape.lineTo(0, 10)
-    shape.lineTo(0, 0)
+    shape.moveTo((originPositionX - line[0])/10, (originPositionZ -line[1])/10)
+    shape.lineTo((originPositionX - line[2])/10, (originPositionZ -line[3]) /10)
+   
+ 
 
     const extrudeSettings = {
-        steps: 50,
-        depth: 0.25,
+        steps: 20,
+        depth: 10,
         bevelEnabled: false,
     }
 
 
     return (
         <>
-            <mesh key={key} >                          
+            <mesh key={index} position-z={-10} >                          
                 <extrudeGeometry args={[shape, extrudeSettings]} />
                 <meshStandardMaterial
-                    {...floorTexture}
-                    side={THREE.DoubleSide}
+                    color="lightgray"
+                    side={THREE.BackSide}
                 />
             </mesh>
         </>

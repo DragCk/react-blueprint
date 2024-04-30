@@ -1,8 +1,10 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react/prop-types */
 /* eslint-disable react/no-unknown-property */
 import { MeshReflectorMaterial, useTexture } from "@react-three/drei"
+import * as THREE from "three"
 
-
-const Floor = () => {
+const Floor = ({closeShape, originPositionX, originPositionZ}) => {
 
     const floorTexture = useTexture({
         map: "./textures/raw_plank_wall_diff_1k.jpg",
@@ -12,10 +14,27 @@ const Floor = () => {
 
     })
 
+    const shape = new THREE.Shape()
+    
+
+    shape.moveTo((originPositionX - parseInt(closeShape[0][0])) / 10 , (originPositionZ - parseInt(closeShape[0][1])) / 10 )
+    for(let i=1; i < closeShape.length; i++){
+        shape.lineTo((originPositionX - parseInt(closeShape[i][0])) / 10 , (originPositionZ - parseInt(closeShape[i][1])) / 10)
+    }
+ 
+
+    const extrudeSettings = {
+        steps: 20,
+        depth: 0.1,
+        bevelEnabled: false,
+    }
+
+
+
     return (
-        <mesh rotation-x={-Math.PI * 0.5} position={[0, -0.1 , 0]} scale={1} >
-                <planeGeometry args={[200, 200]} />
-                <MeshReflectorMaterial
+        <mesh  >
+                <extrudeGeometry args={[shape, extrudeSettings]} />
+                {/* <MeshReflectorMaterial
                     {...floorTexture}
                     blur={[50, 50]}
                     resolution={1024}
@@ -28,7 +47,10 @@ const Floor = () => {
                     color="#050505"
                     metalness={0}
                     mirror={1}
-                    />
+                /> */}
+                <meshStandardMaterial 
+                   {...floorTexture}
+                />
         
             </mesh>
     )
