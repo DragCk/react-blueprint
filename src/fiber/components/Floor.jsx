@@ -51,7 +51,7 @@ const Floor = ({closeShape, originPositionX, originPositionZ}) => {
                 <meshStandardMaterial 
                    {...floorTexture}
                 />
-        
+
             </mesh>
     )
 

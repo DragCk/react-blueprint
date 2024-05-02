@@ -43,7 +43,6 @@ const Walls = ({line, originPositionX, originPositionZ}) => {
                 color="#eab676"
                 attach="material"
                 // {...wallTexture}
-               
                 side={THREE.DoubleSide}
                 
             />

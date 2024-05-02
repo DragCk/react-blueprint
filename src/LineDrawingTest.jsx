@@ -35,12 +35,21 @@ export default function App() {
 
 
   return (
-    <Stage width={window.innerWidth} height={window.innerHeight}>
-        
+    <Stage 
+        width={window.innerWidth}
+        height={window.innerHeight}>
         <Layer>
             <Label x={200} y={200} >
-            <Tag fill="white" pointerWidth={10} pointerHeight={10} lineJoin="round" shadowColor="white" />
-            <Text text={`x:${position.x},y:${position.y}`} padding={5} fill="black" />
+                <Tag 
+                    fill="white" 
+                    pointerWidth={10} 
+                    pointerHeight={10} 
+                    lineJoin="round" 
+                    shadowColor="white"/>
+                <Text 
+                    text={`x:${position.x},y:${position.y}`} 
+                    padding={5} 
+                    fill="black"/>
             </Label> 
             <Circle
                 x={position.x}
@@ -52,8 +61,7 @@ export default function App() {
                 draggable
                 onDragStart={handleDragStart}
                 onDragMove={handleDragMove}
-                onDragEnd={handleDragEnd}
-            />
+                onDragEnd={handleDragEnd}/>
         </Layer>
     </Stage>
   );

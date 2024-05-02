@@ -13,6 +13,7 @@ const Floor = ({lines, setLines, mode}) => {
     const [lineMoving, setLineMoving] = useState(false)
     const [tempintersection, setTempIntersection] = useState({x:0, y:0})
     
+    
     const gridSize = 20;
 
     /* ----------Drawing lines----------- */
@@ -237,8 +238,7 @@ const Floor = ({lines, setLines, mode}) => {
             {updateLine[selectedLineIndex] = [updateLine[selectedLineIndex][0], updateLine[selectedLineIndex][1], snappedPos[0], snappedPos[1]]}
             setLines(updateLine)
             setSelectedLineIndex(null)
-        }
-            
+        } 
     }
 
 

@@ -24,24 +24,30 @@ const Walls2 = ({line, index, originPositionX, originPositionZ}) => {
     const shape = new THREE.Shape()
     shape.moveTo((originPositionX - line[0])/10, (originPositionZ -line[1])/10)
     shape.lineTo((originPositionX - line[2])/10, (originPositionZ -line[3]) /10)
-   
+    
  
 
     const extrudeSettings = {
         steps: 20,
-        depth: 10,
+        depth: 7,
         bevelEnabled: false,
     }
 
 
     return (
         <>
-            <mesh key={index} position-z={-10} >                          
+            <mesh key={index} position-z={-7} >                          
                 <extrudeGeometry args={[shape, extrudeSettings]} />
-                <meshStandardMaterial
+                <meshBasicMaterial
                     color="lightgray"
                     side={THREE.BackSide}
                 />
+                <Edges
+                linewidth={5}
+                scale={1}
+                threshold={15} // Display edges only when the angle between two faces exceeds this value (default=15 degrees)
+                color="white"
+            />
             </mesh>
         </>
     )

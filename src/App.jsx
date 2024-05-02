@@ -3,9 +3,8 @@ import EngineeringDrawing from "./drawing/Engineering.drawing";
 import Drawing from "./fiber/Drawing.jsx";
 import FloorPlan from "./drawing/FloorPlan.jsx";
 import ThreeDrawing from "./fiber/Three.drawing.jsx";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState } from "react";
-import { Button, Container, Typography, Box } from "@mui/material";
+import { Button, Box } from "@mui/material";
 
 /*---------Icons Import---------*/
 import DeleteIcon from "@mui/icons-material/Delete"
@@ -62,7 +61,7 @@ function App() {
             >
               {page === "2D" ? "3D View" : "2D View"}
             </Button>
-            {page === "2D" && (
+            {page === "2D" ? (
               <>
                 <Button variant="contained" disabled={mode === "Drawing"} onClick={() => {handleChangeMode("Drawing")}} startIcon={<DrawIcon/>}>
                   Draw Line
@@ -77,7 +76,13 @@ function App() {
                   Clean All
                 </Button>
               </>
-            )}
+            ) : (
+              <>
+                
+              </>
+            )
+          
+          }
             
           </Box>
         }
