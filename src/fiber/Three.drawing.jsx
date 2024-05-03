@@ -1,22 +1,27 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
 /* eslint-disable react/no-unknown-property */
-
-import { CameraControls, OrbitControls, Environment, MeshReflectorMaterial, useTexture } from "@react-three/drei"
+import {Suspense, useState} from "react"
+import { CameraControls, OrbitControls, Environment, MeshReflectorMaterial, useTexture, PivotControls } from "@react-three/drei"
 import { Canvas } from "@react-three/fiber"
 import Floor from "./components/Floor"
 import Walls from "./components/Walls"
 import Walls2 from "./components/Walls2"
 
+import Cabinet from "./models/Cabinet"
+import LoadModel from "./models/LoadModel"
+
 
 import * as THREE from "three"
 
 
-const ThreeDrawing = ({lines}) => {
+const ThreeDrawing = ({lines, models}) => {
    
     console.log("thist is three")
     console.log(lines)
-
+  
+    console.log("Models")
+    console.log(models)
 
     /*--------Find Closed Shapes--------*/
     function findClosedShapes(coordinates) {
@@ -127,19 +132,19 @@ const ThreeDrawing = ({lines}) => {
     
     return (
         <>
-            <Canvas
-                raycaster={{ 
-                params:{ 
-                    Line:{ 
-                        threshold: 5 
-                }}}}
-                camera={{
-                    fav:45,
-                    near:0.1,
-                    far: 3000,
-                    position:[0, 25, -10],
-                }}
-            >
+          <Canvas
+              raycaster={{ 
+              params:{ 
+                  Line:{ 
+                      threshold: 5 
+              }}}}
+              camera={{
+                  fav:45,
+                  near:0.1,
+                  far: 3000,
+                  position:[0, 25, -10],
+              }}
+          >
 
             {/* <OrbitControls makeDefault enableDamping /> */}
 
@@ -150,13 +155,13 @@ const ThreeDrawing = ({lines}) => {
               azimuthRotateSpeed={0.5}
               dollySpeed={0.5}
               truckSpeed={0.5}
+              setLookAt={[0, 25, -10,0, 100, 0]}
               />
-            <directionalLight position={ [ 10, 20, 30 ] } intensity={ 4.5 } />
-            <ambientLight intensity={ 1.5 } />
+            <directionalLight position={ [ 0, 20, 0 ] } intensity={ 1 } />
+            <ambientLight intensity={ 0.5 } />
             
+
             <Environment preset="city" />
-            
-            
             
             {/* <group >
                 {lines.map((line, index) => {
@@ -165,7 +170,7 @@ const ThreeDrawing = ({lines}) => {
                     )
                 })}
             </group> */}
-           
+            
             <group rotation-x={Math.PI * 0.5}>
                 {lines.map((line, index) => {
                     return (
@@ -176,13 +181,19 @@ const ThreeDrawing = ({lines}) => {
                     return(
                         <Floor closeShape={closeShape} key={index} originPositionX={originPositionX} originPositionZ={originPositionZ} />
                     )
-            })}
-                
+                })}
             </group>
-           
-           
-
-            </Canvas>
+            
+            
+            <Suspense>
+              {models && models.map((model) => {
+                return (
+                  <LoadModel url={model.file} key={model.id} />
+                )
+              })}     
+            </Suspense>
+          
+          </Canvas>
         </>
 
     ) 

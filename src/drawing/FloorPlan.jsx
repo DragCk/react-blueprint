@@ -326,6 +326,7 @@ const Floor = ({lines, setLines, mode}) => {
         >
             <Layer>
                 {drawGrid()}
+              
                 {lines.map((line, index) => (
                     <>
                         <Line

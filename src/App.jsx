@@ -4,7 +4,7 @@ import Drawing from "./fiber/Drawing.jsx";
 import FloorPlan from "./drawing/FloorPlan.jsx";
 import ThreeDrawing from "./fiber/Three.drawing.jsx";
 import { useState } from "react";
-import { Button, Box } from "@mui/material";
+import { Button, Box, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 
 /*---------Icons Import---------*/
 import DeleteIcon from "@mui/icons-material/Delete"
@@ -13,12 +13,26 @@ import DrawIcon from "@mui/icons-material/Draw"
 import ThreeDRotation from '@mui/icons-material/ThreeDRotation';
 import MapIcon from '@mui/icons-material/Map.js';
 
-
 function App() {
   const [page, setPage] = useState("2D");
-  const [lines, setLines] = useState([]);
+  const [lines, setLines] = useState([[300, 300, 300, 500],
+    [300, 500, 500, 500],
+    [500, 500, 500, 300],
+    [500, 300, 300, 300]]);
   const [mode, setMode] = useState("Drawing")
-  
+  const [selectedModel, setSelectedModel] = useState("");
+  const [models, setModels] = useState([]);
+
+  const addModel = () => {
+    if (selectedModel) {
+      setModels([...models, { id: models.length, file: selectedModel }]);
+      
+    }
+  };
+
+  const handleModelChange = (event) => {
+    setSelectedModel(event.target.value);
+  };
 
   const handleOnClick = () => {
     if (page === "2D") setPage("3D");
@@ -33,6 +47,7 @@ function App() {
 
   const handleChangeMode = (m) => {
     setMode(m)
+    
     console.log(mode)
   }
 
@@ -40,7 +55,7 @@ function App() {
     <>
       <Box
         width= "100vw"
-        height="45px"
+        height="65px"
         position="fixed"
         zIndex={10}
         bgcolor= "white"
@@ -78,12 +93,19 @@ function App() {
               </>
             ) : (
               <>
-                
+                <FormControl variant="outlined" sx={{ minWidth: 120 , maxHeight: 20}} size="small">
+                  <InputLabel >Model</InputLabel>
+
+                  <Select value={selectedModel} onChange={handleModelChange}>
+                    <MenuItem value="./cabinet/cabinet.glb">Cabinet</MenuItem>
+                    <MenuItem value="./Sofa/untitled.gltf">Sofa</MenuItem>
+                    {/* Add more options for other models */}
+                  </Select>
+                </FormControl>
+                <Button variant="contained" onClick={addModel}>Add Model</Button>
               </>
             )
-          
           }
-            
           </Box>
         }
       </Box>
@@ -94,7 +116,7 @@ function App() {
           mode={mode}
         />
       ) : (
-        <ThreeDrawing lines={lines} />
+        <ThreeDrawing lines={lines} models={models} />
       )}
     </>
   );

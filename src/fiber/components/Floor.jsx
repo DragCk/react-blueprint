@@ -32,7 +32,7 @@ const Floor = ({closeShape, originPositionX, originPositionZ}) => {
 
 
     return (
-        <mesh  >
+        <mesh castShadow  >
                 <extrudeGeometry args={[shape, extrudeSettings]} />
                 {/* <MeshReflectorMaterial
                     {...floorTexture}
@@ -49,6 +49,7 @@ const Floor = ({closeShape, originPositionX, originPositionZ}) => {
                     mirror={1}
                 /> */}
                 <meshStandardMaterial 
+                    
                    {...floorTexture}
                 />
 
