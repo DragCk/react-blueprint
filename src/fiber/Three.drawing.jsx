@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
 /* eslint-disable react/no-unknown-property */
-import {Suspense, useState} from "react"
+import {Suspense, useEffect, useRef, useState} from "react"
 import { CameraControls, OrbitControls, Environment, MeshReflectorMaterial, useTexture, PivotControls } from "@react-three/drei"
 import { Canvas } from "@react-three/fiber"
 import Floor from "./components/Floor"
@@ -10,13 +10,13 @@ import Walls2 from "./components/Walls2"
 
 import Cabinet from "./models/Cabinet"
 import LoadModel from "./models/LoadModel"
-
+import Camera from "./components/Camera"
 
 import * as THREE from "three"
 
 
 const ThreeDrawing = ({lines, models}) => {
-   
+
     console.log("thist is three")
     console.log(lines)
   
@@ -66,7 +66,7 @@ const ThreeDrawing = ({lines, models}) => {
     }
       
     const closedShapes = findClosedShapes(lines);
-    console.log("形成閉合圖形的座標:", closedShapes);
+    // console.log("形成閉合圖形的座標:", closedShapes);
 
 
     /*--------Find Intersections--------*/
@@ -130,33 +130,23 @@ const ThreeDrawing = ({lines, models}) => {
     const originPositionX = center.x ? center.x : lines[0][0]
     const originPositionZ = center.y ? center.y : lines[0][1]
     
+   
+
     return (
         <>
           <Canvas
-              raycaster={{ 
-              params:{ 
-                  Line:{ 
-                      threshold: 5 
-              }}}}
               camera={{
                   fav:45,
                   near:0.1,
                   far: 3000,
-                  position:[0, 25, -10],
+                  position:[0, 25, -10], 
               }}
           >
 
             {/* <OrbitControls makeDefault enableDamping /> */}
 
-            <CameraControls 
-              makeDefault 
-              maxPolarAngle={Math.PI * 0.5} 
-              polarRotateSpeed={0.5}
-              azimuthRotateSpeed={0.5}
-              dollySpeed={0.5}
-              truckSpeed={0.5}
-              setLookAt={[0, 25, -10,0, 100, 0]}
-              />
+            <Camera/>
+
             <directionalLight position={ [ 0, 20, 0 ] } intensity={ 1 } />
             <ambientLight intensity={ 0.5 } />
             

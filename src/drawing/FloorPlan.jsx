@@ -5,13 +5,16 @@ import { Stage, Layer, Line, Circle, Text, Label, Tag } from 'react-konva';
 import { v4 as uuidv4 } from 'uuid';
 
 const Floor = ({lines, setLines, mode}) => {
-   
+    const [windowWidth, setWindowWidth] = useState(0)
+    const [windowHeight, setWindowHeight] = useState(0)
     const [tempLine, setTempLine] = useState(null);
     const [drawing, setDrawing] = useState(false); // 新增了一個狀態變量用於標記是否正在繪製線
     const [selectedLineIndex, setSelectedLineIndex] = useState(null);
     const [selectedIntersectionPoint, setSelectedIntersectionPoint] = useState({x:0, y:0})
     const [lineMoving, setLineMoving] = useState(false)
     const [tempintersection, setTempIntersection] = useState({x:0, y:0})
+
+
     
     
     const gridSize = 20;
@@ -309,17 +312,30 @@ const Floor = ({lines, setLines, mode}) => {
     }
 
     /* ----------Line Dragging by Body----------- */
-    const handleLineMove = (e, index) => {
+    const handleLineMove = (e) => {
         const {x, y} = e.target.attrs
         console.log(e.target.absolutePosition())
         console.log(`Line: x: ${x}, y:${y}`)
     }
 
 
+    /* ----------Konva stage resizing----------- */
+    const handleResize = () => {
+        setWindowWidth(window.innerWidth)
+        setWindowHeight(window.innerHeight)
+    }
+
+    useEffect(() => {
+        window.addEventListener("resize", handleResize);
+        handleResize();
+        return () => window.removeEventListener("resize", handleResize)
+    }, [])
+
+
     return (
         <Stage 
-            width={window.innerWidth} 
-            height={window.innerHeight}  
+            width={windowWidth} 
+            height={windowHeight}  
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -381,7 +397,6 @@ const Floor = ({lines, setLines, mode}) => {
                     fill="red" 
                     draggable={mode === "Moving" ? true : false}
                     onDragStart={handleIntersectionMouseDown}
-                    
                     onDragEnd={hadleIntersectionMouseUp}
                     />
                 ))}

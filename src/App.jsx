@@ -15,7 +15,8 @@ import MapIcon from '@mui/icons-material/Map.js';
 
 function App() {
   const [page, setPage] = useState("2D");
-  const [lines, setLines] = useState([[300, 300, 300, 500],
+  const [lines, setLines] = useState([
+    [300, 300, 300, 500],
     [300, 500, 500, 500],
     [500, 500, 500, 300],
     [500, 300, 300, 300]]);
@@ -23,7 +24,13 @@ function App() {
   const [selectedModel, setSelectedModel] = useState("");
   const [models, setModels] = useState([]);
 
+
+  const modelData = {
+    cabinet: {path:"./cabinet/cabinet.glb", scale: 5}
+  }
+
   const addModel = () => {
+   
     if (selectedModel) {
       setModels([...models, { id: models.length, file: selectedModel }]);
       
@@ -31,6 +38,9 @@ function App() {
   };
 
   const handleModelChange = (event) => {
+    
+    console.log(event.target.value)
+    
     setSelectedModel(event.target.value);
   };
 
@@ -47,9 +57,10 @@ function App() {
 
   const handleChangeMode = (m) => {
     setMode(m)
-    
     console.log(mode)
   }
+
+
 
   return (
     <>
@@ -67,17 +78,19 @@ function App() {
         {
           <Box
            margin="1rem"
+           border="1px solid red"
           >
-            <Button 
-              variant="contained" 
-              disabled={lines.length === 0} 
-              onClick={handleOnClick} 
-              startIcon={page==="2D"? <ThreeDRotation/> : <MapIcon/> }
-            >
-              {page === "2D" ? "3D View" : "2D View"}
-            </Button>
+
             {page === "2D" ? (
               <>
+                <Button 
+                variant="contained" 
+                disabled={lines.length === 0} 
+                onClick={handleOnClick} 
+                startIcon={<ThreeDRotation/>}
+                >
+                  3D View
+                </Button>
                 <Button variant="contained" disabled={mode === "Drawing"} onClick={() => {handleChangeMode("Drawing")}} startIcon={<DrawIcon/>}>
                   Draw Line
                 </Button>
@@ -93,6 +106,14 @@ function App() {
               </>
             ) : (
               <>
+                <Button 
+                  variant="contained" 
+                  disabled={lines.length === 0} 
+                  onClick={handleOnClick} 
+                  startIcon={<MapIcon/>}
+                >
+                  2D View
+                </Button>
                 <FormControl variant="outlined" sx={{ minWidth: 120 , maxHeight: 20}} size="small">
                   <InputLabel >Model</InputLabel>
 
@@ -109,15 +130,18 @@ function App() {
           </Box>
         }
       </Box>
-      {page === "2D" ? (
-        <FloorPlan
-          lines={lines}
-          setLines={setLines}
-          mode={mode}
-        />
-      ) : (
-        <ThreeDrawing lines={lines} models={models} />
-      )}
+
+      
+      <Box  
+        width= "100%"
+        height="100%"
+      >
+        {page === "2D" ? (
+          <FloorPlan lines={lines} setLines={setLines} mode={mode} />
+        ) : (
+          <ThreeDrawing lines={lines} models={models} />
+        )}
+      </Box>
     </>
   );
 }

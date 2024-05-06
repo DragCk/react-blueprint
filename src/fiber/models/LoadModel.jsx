@@ -43,7 +43,7 @@ const LoadModel = (props) => {
                 disableRotations={Clicked ? false : true}
                 disableSliders={Clicked ? false : true}
                 >
-                    <primitive object={copiedScene} scale={3} rotation-y={Math.PI } onClick={(e) => handleOnClick(e)} />
+                    <primitive object={copiedScene} scale={3} rotation-y={Math.PI} onClick={(e) => handleOnClick(e)} />
             </PivotControls>
           
         </>
