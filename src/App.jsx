@@ -5,6 +5,9 @@ import FloorPlan from "./drawing/FloorPlan.jsx";
 import ThreeDrawing from "./fiber/Three.drawing.jsx";
 import { useState } from "react";
 import { Button, Box, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
+import { useSelector, useDispatch } from "react-redux";
+
+import ModelDatas from "./fiber/components/ModelDatas.jsx"
 
 /*---------Icons Import---------*/
 import DeleteIcon from "@mui/icons-material/Delete"
@@ -13,34 +16,29 @@ import DrawIcon from "@mui/icons-material/Draw"
 import ThreeDRotation from '@mui/icons-material/ThreeDRotation';
 import MapIcon from '@mui/icons-material/Map.js';
 
+import { changeMode } from "./redux/features/mode.jsx"
+import { clearLines } from "./redux/features/lines.jsx";
+
 function App() {
   const [page, setPage] = useState("2D");
-  const [lines, setLines] = useState([
-    [300, 300, 300, 500],
-    [300, 500, 500, 500],
-    [500, 500, 500, 300],
-    [500, 300, 300, 300]]);
-  const [mode, setMode] = useState("Drawing")
+  //const [mode, setMode] = useState("Drawing")
   const [selectedModel, setSelectedModel] = useState("");
   const [models, setModels] = useState([]);
+  const {lines} = useSelector((state) => state.lines)
+  const {mode} = useSelector((state) => state.mode)
 
-
-  const modelData = {
-    cabinet: {path:"./cabinet/cabinet.glb", scale: 5}
-  }
+  const dispatch = useDispatch()
+  
 
   const addModel = () => {
-   
+    
     if (selectedModel) {
-      setModels([...models, { id: models.length, file: selectedModel }]);
+      setModels([...models, { ...ModelDatas[selectedModel] , id: models.length}]);
       
     }
   };
 
   const handleModelChange = (event) => {
-    
-    console.log(event.target.value)
-    
     setSelectedModel(event.target.value);
   };
 
@@ -50,14 +48,15 @@ function App() {
   };
 
   const handleClean = () => {
-    setMode("Drawing")
-    setLines([]);
+    //setMode("Drawing")
+    dispatch(changeMode("Drawing"))
+    dispatch(clearLines())
   };
 
 
   const handleChangeMode = (m) => {
-    setMode(m)
-    console.log(mode)
+    dispatch(changeMode(m))
+    
   }
 
 
@@ -118,8 +117,8 @@ function App() {
                   <InputLabel >Model</InputLabel>
 
                   <Select value={selectedModel} onChange={handleModelChange}>
-                    <MenuItem value="./cabinet/cabinet.glb">Cabinet</MenuItem>
-                    <MenuItem value="./Sofa/untitled.gltf">Sofa</MenuItem>
+                    <MenuItem value="cabinet">Cabinet</MenuItem>
+                    <MenuItem value="sofa">Sofa</MenuItem>
                     {/* Add more options for other models */}
                   </Select>
                 </FormControl>
@@ -137,9 +136,9 @@ function App() {
         height="100%"
       >
         {page === "2D" ? (
-          <FloorPlan lines={lines} setLines={setLines} mode={mode} />
+          <FloorPlan mode={mode} />
         ) : (
-          <ThreeDrawing lines={lines} models={models} />
+          <ThreeDrawing models={models} />
         )}
       </Box>
     </>

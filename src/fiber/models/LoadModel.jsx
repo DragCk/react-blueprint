@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unknown-property */
 /* eslint-disable react/prop-types */
-import { useGLTF, PivotControls } from "@react-three/drei";
+import { useGLTF, PivotControls, Html } from "@react-three/drei";
 import { applyProps } from "@react-three/fiber";
 import { useState, useEffect, useMemo } from "react";
 
@@ -13,6 +13,8 @@ const LoadModel = (props) => {
         e.stopPropagation()
         setClicked(!Clicked)
     }
+
+    
 
     useEffect(() => {
         model.scene.traverse((o)=> {
@@ -35,7 +37,7 @@ const LoadModel = (props) => {
         <>
             <PivotControls
                 anchor={[0, 0, 0]}
-                scale={2}
+                scale={props.scale}
                 depthTest={false}
                 activeAxes={[true,false,true]}
                 disableScaling
@@ -43,7 +45,14 @@ const LoadModel = (props) => {
                 disableRotations={Clicked ? false : true}
                 disableSliders={Clicked ? false : true}
                 >
-                    <primitive object={copiedScene} scale={3} rotation-y={Math.PI} onClick={(e) => handleOnClick(e)} />
+                    {Clicked && 
+                        (
+                            <Html position={[0,5,0]}  occlude rotation-y={Math.PI}>
+                                <p>{`${props.name}`}</p>
+                            </Html>
+                        )
+                    }
+                    <primitive object={copiedScene} scale={props.scale} rotation-y={Math.PI} onClick={(e) => handleOnClick(e)} />
             </PivotControls>
           
         </>

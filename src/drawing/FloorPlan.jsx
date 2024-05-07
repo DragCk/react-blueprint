@@ -3,8 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import { Stage, Layer, Line, Circle, Text, Label, Tag } from 'react-konva';
 import { v4 as uuidv4 } from 'uuid';
+import { useSelector, useDispatch } from 'react-redux';
 
-const Floor = ({lines, setLines, mode}) => {
+import { setNewLines, setAfterDelete } from "../redux/features/lines"
+
+
+const Floor = () => {
     const [windowWidth, setWindowWidth] = useState(0)
     const [windowHeight, setWindowHeight] = useState(0)
     const [tempLine, setTempLine] = useState(null);
@@ -12,9 +16,10 @@ const Floor = ({lines, setLines, mode}) => {
     const [selectedLineIndex, setSelectedLineIndex] = useState(null);
     const [selectedIntersectionPoint, setSelectedIntersectionPoint] = useState({x:0, y:0})
     const [lineMoving, setLineMoving] = useState(false)
-    const [tempintersection, setTempIntersection] = useState({x:0, y:0})
 
-
+    const { mode } = useSelector((state) => state.mode)
+    const { lines } = useSelector((state) => state.lines)
+    const dispatch = useDispatch()
     
     
     const gridSize = 20;
@@ -51,7 +56,8 @@ const Floor = ({lines, setLines, mode}) => {
 
             if(tempLine[0] !== tempLine[2] || tempLine[1] !== tempLine[3]) 
             {
-                setLines([...lines, tempLine]);
+                // setLines([...lines, tempLine]);
+                dispatch(setNewLines(tempLine))
             }
             
             setTempLine([]);
@@ -111,7 +117,7 @@ const Floor = ({lines, setLines, mode}) => {
         if ( mode === "deleting")
         {
             const newLines = lines.filter((_, i) => i !== index)
-            setLines(newLines)
+            dispatch(setAfterDelete(newLines))
         }
     }
     
@@ -213,6 +219,7 @@ const Floor = ({lines, setLines, mode}) => {
     const handleDragStart = (index) => {
         if( mode === "Moving")
         {
+            
             setSelectedLineIndex(index);
         }
     };
@@ -222,11 +229,12 @@ const Floor = ({lines, setLines, mode}) => {
             const {x, y} = e.target.attrs
             
             const updateLine = [...lines] 
+            
             if(position === "start")
             {updateLine[selectedLineIndex] = [x, y, updateLine[selectedLineIndex][2], updateLine[selectedLineIndex][3]]}
             if( position === "end")
-            {updateLine[selectedLineIndex] = [updateLine[selectedLineIndex][0], updateLine[selectedLineIndex][1], x, y]}
-            setLines(updateLine)
+            {updateLine[selectedLineIndex] = [updateLine[selectedLineIndex][0], updateLine[selectedLineIndex][1],x, y]}
+            dispatch(setAfterDelete(updateLine))
         }
     }
 
@@ -239,7 +247,7 @@ const Floor = ({lines, setLines, mode}) => {
             {updateLine[selectedLineIndex] = [snappedPos[0], snappedPos[1] , updateLine[selectedLineIndex][2], updateLine[selectedLineIndex][3]]}
             if( position === "end")
             {updateLine[selectedLineIndex] = [updateLine[selectedLineIndex][0], updateLine[selectedLineIndex][1], snappedPos[0], snappedPos[1]]}
-            setLines(updateLine)
+            dispatch(setAfterDelete(updateLine))
             setSelectedLineIndex(null)
         } 
     }
@@ -285,27 +293,27 @@ const Floor = ({lines, setLines, mode}) => {
     const hadleIntersectionMouseUp = (e) => {
         
         if(lineMoving){
-            console.log(selectedIntersectionPoint)
+            
             const {x, y} = e.target.attrs
             const snappedPos = snapToGrid(x , y);
-            const updateLines = [...lines]
-            updateLines.map((line) =>{
+            const updateLines = lines.map((line) =>{
+                
                 if(line[0] <= selectedIntersectionPoint.x + 5 && line[0] >= selectedIntersectionPoint.x - 5){
                     if(line[1] <= selectedIntersectionPoint.y + 5 && line[1] >= selectedIntersectionPoint.y - 5)
                     {
-                        line[0] = snappedPos[0]
-                        line[1] = snappedPos[1]
+                        return [snappedPos[0], snappedPos[1], line[2], line[3]];
                     }
                 } 
                 if(line[2] <= selectedIntersectionPoint.x + 5 && line[2] >= selectedIntersectionPoint.x - 5){
                     if(line[3] <= selectedIntersectionPoint.y + 5 && line[3] >= selectedIntersectionPoint.y - 5)
-                { 
-                        line[2] = snappedPos[0]
-                        line[3] = snappedPos[1]
+                    { 
+                    return [line[0], line[1], snappedPos[0], snappedPos[1]];
                     }
                 } 
+                return line;
             })
-            setLines(updateLines)
+
+            dispatch(setAfterDelete(updateLines))
             setLineMoving(false)
         }
         

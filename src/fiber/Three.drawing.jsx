@@ -2,8 +2,17 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/no-unknown-property */
 import {Suspense, useEffect, useRef, useState} from "react"
-import { CameraControls, OrbitControls, Environment, MeshReflectorMaterial, useTexture, PivotControls } from "@react-three/drei"
+import { CameraControls, 
+          OrbitControls, 
+          Environment, 
+          MeshReflectorMaterial, 
+          useTexture, 
+          PivotControls,
+          Html
+        } from "@react-three/drei"
 import { Canvas } from "@react-three/fiber"
+import { useSelector, useDispatch } from "react-redux"
+
 import Floor from "./components/Floor"
 import Walls from "./components/Walls"
 import Walls2 from "./components/Walls2"
@@ -15,13 +24,17 @@ import Camera from "./components/Camera"
 import * as THREE from "three"
 
 
-const ThreeDrawing = ({lines, models}) => {
 
-    console.log("thist is three")
+const ThreeDrawing = ({models}) => {
+    const {lines} = useSelector((state) => state.lines)
+
+    console.log("this is three")
     console.log(lines)
   
     console.log("Models")
     console.log(models)
+    
+    const dispatch = useDispatch() 
 
     /*--------Find Closed Shapes--------*/
     function findClosedShapes(coordinates) {
@@ -141,25 +154,33 @@ const ThreeDrawing = ({lines, models}) => {
                   far: 3000,
                   position:[0, 25, -10], 
               }}
+              shadows
           >
 
-            {/* <OrbitControls makeDefault enableDamping /> */}
-
+            <Html
+              className="constainer"
+              position={[0, 10, 0]}
+              occlude
+              transform
+              rotation-y={Math.PI}
+              
+            >
+              <div>
+                <h1>Hellou</h1>
+              </div>
+            </Html>
             <Camera/>
 
-            <directionalLight position={ [ 0, 20, 0 ] } intensity={ 1 } />
-            <ambientLight intensity={ 0.5 } />
-            
+            <directionalLight 
+              position={ [ 0, 20, 0 ] } 
+              intensity={ 3 } 
+              castShadow 
+              
+              shadow-camera-near = {1}
+              shadow-camera-far={1000}
+            />
 
             <Environment preset="city" />
-            
-            {/* <group >
-                {lines.map((line, index) => {
-                    return (
-                        <Walls line={line} key={index} originPositionX={originPositionX} originPositionZ={originPositionZ} />
-                    )
-                })}
-            </group> */}
             
             <group rotation-x={Math.PI * 0.5}>
                 {lines.map((line, index) => {
@@ -174,11 +195,17 @@ const ThreeDrawing = ({lines, models}) => {
                 })}
             </group>
             
+            <mesh position={[0, 5 ,0]} castShadow>
+              <sphereGeometry args={[2,20,10]}  />
+              <meshStandardMaterial color="red" castShadow/>
+            </mesh>
+              
             
+
             <Suspense>
               {models && models.map((model) => {
                 return (
-                  <LoadModel url={model.file} key={model.id} />
+                  <LoadModel url={model.path} key={model.id} scale={model.scale} name={model.name} />
                 )
               })}     
             </Suspense>

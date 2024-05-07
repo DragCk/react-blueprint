@@ -17,6 +17,8 @@ const Camera = () => {
                 azimuthRotateSpeed={0.5}
                 dollySpeed={0.5}
                 truckSpeed={0.5}
+                dollyToCursor={true}
+                verticalDragToForward={true}
                 ref={cameraControlsRef}
             />
         </>
