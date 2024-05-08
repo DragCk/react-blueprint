@@ -1,15 +1,8 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
 /* eslint-disable react/no-unknown-property */
-import {Suspense, useEffect, useRef, useState} from "react"
-import { CameraControls, 
-          OrbitControls, 
-          Environment, 
-          MeshReflectorMaterial, 
-          useTexture, 
-          PivotControls,
-          Html
-        } from "@react-three/drei"
+import {Suspense} from "react"
+import { Environment,  Html} from "@react-three/drei"
 import { Canvas } from "@react-three/fiber"
 import { useSelector, useDispatch } from "react-redux"
 
@@ -17,7 +10,6 @@ import Floor from "./components/Floor"
 import Walls from "./components/Walls"
 import Walls2 from "./components/Walls2"
 
-import Cabinet from "./models/Cabinet"
 import LoadModel from "./models/LoadModel"
 import Camera from "./components/Camera"
 
@@ -25,14 +17,8 @@ import * as THREE from "three"
 
 
 
-const ThreeDrawing = ({models}) => {
+const ThreeDrawing = ({models}) => { 
     const {lines} = useSelector((state) => state.lines)
-
-    console.log("this is three")
-    console.log(lines)
-  
-    console.log("Models")
-    console.log(models)
     
     const dispatch = useDispatch() 
 
@@ -147,6 +133,7 @@ const ThreeDrawing = ({models}) => {
 
     return (
         <>
+          
           <Canvas
               camera={{
                   fav:45,
@@ -156,28 +143,15 @@ const ThreeDrawing = ({models}) => {
               }}
               shadows
           >
-
-            <Html
-              className="constainer"
-              position={[0, 10, 0]}
-              occlude
-              transform
-              rotation-y={Math.PI}
-              
-            >
-              <div>
-                <h1>Hellou</h1>
-              </div>
-            </Html>
+            
             <Camera/>
 
             <directionalLight 
               position={ [ 0, 20, 0 ] } 
               intensity={ 3 } 
               castShadow 
-              
               shadow-camera-near = {1}
-              shadow-camera-far={1000}
+              shadow-camera-far={1000} 
             />
 
             <Environment preset="city" />
@@ -203,9 +177,9 @@ const ThreeDrawing = ({models}) => {
             
 
             <Suspense>
-              {models && models.map((model) => {
+              {models && models.map((model, index) => {
                 return (
-                  <LoadModel url={model.path} key={model.id} scale={model.scale} name={model.name} />
+                  <LoadModel key={index} model={model} />
                 )
               })}     
             </Suspense>

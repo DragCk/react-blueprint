@@ -1,12 +1,13 @@
 /* eslint-disable react/no-unknown-property */
 /* eslint-disable react/prop-types */
-import { useGLTF, PivotControls, Html } from "@react-three/drei";
+import { useTexture, useGLTF, PivotControls, Html } from "@react-three/drei";
 import { applyProps } from "@react-three/fiber";
 import { useState, useEffect, useMemo } from "react";
 
-const LoadModel = (props) => {
-    const model = useGLTF(props.url)
-    const copiedScene = useMemo(() => model.scene.clone(), [model.scene])
+const LoadModel = ({model}) => {
+    
+    const gltf = useGLTF(model.path)
+    const copiedScene = useMemo(() => gltf.scene.clone(), [gltf.scene])
     const [Clicked, setClicked] = useState(false)
 
     const handleOnClick = (e) => {
@@ -14,10 +15,13 @@ const LoadModel = (props) => {
         setClicked(!Clicked)
     }
 
-    
+    const textures = model.texture ? model.texture.map((tex) => useTexture(tex)) : null
+
+    console.log("this is textures")
+    console.log(textures)
 
     useEffect(() => {
-        model.scene.traverse((o)=> {
+        copiedScene.traverse((o)=> {
             if(o.isMesh){
                 applyProps(o, {
                     castShadow: true, 
@@ -27,17 +31,14 @@ const LoadModel = (props) => {
                     'material-displacementScale': 0,
                     'material-metalness' : 0,
                 })
-            }})
-    }, [model.scene])
-
-    console.log(model)
-
+            }})                  
+    }, [copiedScene])
 
     return (
         <>
             <PivotControls
                 anchor={[0, 0, 0]}
-                scale={props.scale}
+                scale={model.scale}
                 depthTest={false}
                 activeAxes={[true,false,true]}
                 disableScaling
@@ -48,11 +49,11 @@ const LoadModel = (props) => {
                     {Clicked && 
                         (
                             <Html position={[0,5,0]}  occlude rotation-y={Math.PI}>
-                                <p>{`${props.name}`}</p>
+                                <p>{`${model.name}`}</p>
                             </Html>
                         )
                     }
-                    <primitive object={copiedScene} scale={props.scale} rotation-y={Math.PI} onClick={(e) => handleOnClick(e)} />
+                    <primitive object={copiedScene} scale={model.scale} rotation-y={Math.PI} onClick={(e) => handleOnClick(e)} />
             </PivotControls>
           
         </>

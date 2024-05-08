@@ -21,7 +21,6 @@ import { clearLines } from "./redux/features/lines.jsx";
 
 function App() {
   const [page, setPage] = useState("2D");
-  //const [mode, setMode] = useState("Drawing")
   const [selectedModel, setSelectedModel] = useState("");
   const [models, setModels] = useState([]);
   const {lines} = useSelector((state) => state.lines)
@@ -66,7 +65,7 @@ function App() {
       <Box
         width= "100vw"
         height="65px"
-        position="fixed"
+        //position="fixed"
         zIndex={10}
         bgcolor= "white"
         border="2px solid blue"

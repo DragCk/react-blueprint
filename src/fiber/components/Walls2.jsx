@@ -1,11 +1,9 @@
 /* eslint-disable react/no-unknown-property */
 /* eslint-disable react/prop-types */
-
 // eslint-disable-next-line no-unused-vars
 import { Edges, useTexture} from "@react-three/drei"
 import * as THREE from "three"
 
-// eslint-disable-next-line no-unused-vars
 const Walls2 = ({line, index, originPositionX, originPositionZ}) => {
     const floorTexture = useTexture({
         map: "./textures/raw_plank_wall_diff_1k.jpg",
