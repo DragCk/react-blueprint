@@ -3,6 +3,7 @@
 import { useTexture, useGLTF, PivotControls, Html } from "@react-three/drei";
 import { applyProps } from "@react-three/fiber";
 import { useState, useEffect, useMemo } from "react";
+import { Box, Button, Typography, Container } from "@mui/material";
 
 const LoadModel = ({model}) => {
     
@@ -15,10 +16,38 @@ const LoadModel = ({model}) => {
         setClicked(!Clicked)
     }
 
-    const textures = model.texture ? model.texture.map((tex) => useTexture(tex)) : null
+    /* -------------Textures setup-------------- */
+    const textures = model.texture ? model.texture.map((tex) => useTexture(tex)) : []
+    
+   
+    textures.map((tex)=> {
+        tex.map.flipY = false
+        model.textureRepeat ? tex.map.repeat.x = -1 : null
+        tex.normalMap ? tex.normalMap.flipY = false : null
+        tex.roughnessMap ? tex.roughnessMap.flipY = false : null
+    })
+    
 
-    console.log("this is textures")
-    console.log(textures)
+    /* -------------Change texture-------------- */
+
+    const handleChangeTexture = (texture) => {
+        console.log("Hi I'm Here")
+        console.log(texture)
+        
+        copiedScene.traverse((o) => {
+            if(o.isMesh){
+                o.material.map = texture.map || null
+                o.material.normalMap = texture.normalMap || null
+                o.material.metalnessMap = texture.metalnessMap || null
+                o.material.displacementMap = texture.displacementMap || null
+                o.material.roughnessMap = texture.roughnessMap || null
+            }
+        })
+        
+        
+    }
+
+    /* -------------Model setup-------------- */
 
     useEffect(() => {
         copiedScene.traverse((o)=> {
@@ -31,7 +60,17 @@ const LoadModel = ({model}) => {
                     'material-displacementScale': 0,
                     'material-metalness' : 0,
                 })
-            }})                  
+                if(model.texture){
+                    console.log("")
+                    o.material.map = textures[0].map || null
+                    o.material.normalMap = textures[0].normalMap || null
+                    o.material.metalnessMap = textures[0].metalnessMap || null
+                    o.material.displacementMap = textures[0].displacementMap || null
+                    o.material.roughnessMap = textures[0].roughnessMap || null
+                }
+            }
+            
+        })                  
     }, [copiedScene])
 
     return (
@@ -49,7 +88,25 @@ const LoadModel = ({model}) => {
                     {Clicked && 
                         (
                             <Html position={[0,5,0]}  occlude rotation-y={Math.PI}>
-                                <p>{`${model.name}`}</p>
+                                <Box 
+                                    border="1px solid blue" 
+                                    bgcolor="white" 
+                                    borderRadius="10px" 
+                                >
+                                    <Container>
+                                        <Typography align="center" >{`${model.name}`}</Typography>
+                                    </Container>
+                                    
+                                    {model.texture ?
+                                    (  
+                                        <Container>
+                                           {textures.map((texture,index)=> {
+                                                return (<Button onClick={() => {handleChangeTexture(texture)}} >{`${index}`}</Button>)
+                                            })}
+                                        </Container>
+                                    ) 
+                                    : null}
+                                </Box>
                             </Html>
                         )
                     }

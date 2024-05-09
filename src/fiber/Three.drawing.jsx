@@ -169,10 +169,10 @@ const ThreeDrawing = ({models}) => {
                 })}
             </group>
             
-            <mesh position={[0, 5 ,0]} castShadow>
+            {/* <mesh position={[0, 5 ,0]} castShadow>
               <sphereGeometry args={[2,20,10]}  />
               <meshStandardMaterial color="red" castShadow/>
-            </mesh>
+            </mesh> */}
               
             
 

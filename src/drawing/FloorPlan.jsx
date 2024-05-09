@@ -86,12 +86,15 @@ const Floor = () => {
 
     /* ----------Draw length of Line----------- */
     const calculateLength = (line) => {
+        
         const dx = line[2] - line[0];
         const dy = line[3] - line[1];
         return (Math.sqrt(dx * dx + dy * dy)).toFixed(0);
+        
     };
 
     const drawDimensionLine = (line, index) => {
+        
         const midPoint = [(line[0] + line[2]) / 2, (line[1] + line[3]) / 2];
         const length = calculateLength(line);
         
@@ -113,7 +116,7 @@ const Floor = () => {
 
     /* ----------Deleting Lines----------- */
 
-    const handleDeleteLine = (index) => {
+    const handleDeleteLine = (index) => {324
         if ( mode === "deleting")
         {
             const newLines = lines.filter((_, i) => i !== index)
@@ -178,8 +181,8 @@ const Floor = () => {
     }
 
     const points = findPointIntersections()
-    console.log("points")
-    console.log(points)
+    // console.log("points")
+    // console.log(points)
     /* ----------Intersections----------- */
     const findIntersections = () => {
         const intersections = [];
@@ -349,7 +352,7 @@ const Floor = () => {
             onMouseUp={handleMouseUp}
         >
             <Layer>
-                {drawGrid()}
+                {lines && drawGrid()}
               
                 {lines.map((line, index) => (
                     <>
