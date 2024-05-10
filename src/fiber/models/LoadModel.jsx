@@ -19,21 +19,20 @@ const LoadModel = ({model}) => {
     /* -------------Textures setup-------------- */
     const textures = model.texture ? model.texture.map((tex) => useTexture(tex)) : []
     
-   
+
     textures.map((tex)=> {
         tex.map.flipY = false
         model.textureRepeat ? tex.map.repeat.x = -1 : null
         tex.normalMap ? tex.normalMap.flipY = false : null
         tex.roughnessMap ? tex.roughnessMap.flipY = false : null
     })
+
     
 
     /* -------------Change texture-------------- */
 
     const handleChangeTexture = (texture) => {
         console.log("Hi I'm Here")
-        console.log(texture)
-        
         copiedScene.traverse((o) => {
             if(o.isMesh){
                 o.material.map = texture.map || null
