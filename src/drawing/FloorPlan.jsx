@@ -73,12 +73,12 @@ const Floor = () => {
         const grid = [];
         for (let i = 0; i < window.innerWidth; i += gridSize) {
             const strokesWidth = i % (gridSize * 5) === 0 ? 2 : 0.5
-            grid.push(<Line points={[i, 0, i, window.innerHeight]} stroke="#ddd" strokeWidth={strokesWidth} />);
+            grid.push(<Line key={`${i}-y`} points={[i, 0, i, window.innerHeight]} stroke="#ddd" strokeWidth={strokesWidth} />);
         }
 
         for (let i = 0; i < window.innerHeight; i += gridSize) {
             const strokesWidth = i % (gridSize * 5) === 0 ? 2 : 0.5
-            grid.push(<Line points={[0, i, window.innerWidth, i]} stroke="#ddd" strokeWidth={strokesWidth} />);
+            grid.push(<Line key={`${i}-x`} points={[0, i, window.innerWidth, i]} stroke="#ddd" strokeWidth={strokesWidth} />);
         }
 
         return grid;
@@ -346,7 +346,7 @@ const Floor = () => {
     return (
         <Stage 
             width={windowWidth} 
-            height={windowHeight}  
+            height={windowHeight} 
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}

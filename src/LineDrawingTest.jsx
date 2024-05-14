@@ -1,68 +1,38 @@
-import {useState} from "react"
-import { Stage, Layer, Circle, Text, Label, Tag  } from "react-konva";
 
-export default function App() {
+import { useMemo, useCallback } from 'react';
 
-    const [position, setPosition] = useState({x:100, y:100})
+import { BlurFilter, TextStyle } from 'pixi.js';
+import { Stage, Container, Sprite, Text, Graphics } from '@pixi/react';
 
-    const handleDragStart = e => {
-        e.target.setAttrs({
-            shadowOffset: {
-            x: 15,
-            y: 15
-            },
-            scaleX: 1.1,
-            scaleY: 1.1
-        });
-    };
+const App = () => {
 
-    const handleDragMove = e => {
-        setPosition({x:e.target.attrs.x, y:e.target.attrs.y})
+    const draw = useCallback((g) => {
+        g.clear();
+       
+        g.lineStyle(4, 0xffd900, 1);
+        g.moveTo(50, 50);
+        g.lineTo(250, 50);
+        g.lineTo(100, 100);
+        g.closePath()
+       
+      }, []);
+
+
+    const handleMouseDown = (e) => {
+        console.log(e)
     }
-
-    const handleDragEnd = e => {
-        console.log(position)
-        e.target.to({
-            duration: 0.5,
-            easing: Konva.Easings.ElasticEaseOut,
-            scaleX: 1,
-            scaleY: 1,
-            shadowOffsetX: 5,
-            shadowOffsetY: 5
-        });
-    };
-
-
 
   return (
     <Stage 
-        width={window.innerWidth}
-        height={window.innerHeight}>
-        <Layer>
-            <Label x={200} y={200} >
-                <Tag 
-                    fill="white" 
-                    pointerWidth={10} 
-                    pointerHeight={10} 
-                    lineJoin="round" 
-                    shadowColor="white"/>
-                <Text 
-                    text={`x:${position.x},y:${position.y}`} 
-                    padding={5} 
-                    fill="black"/>
-            </Label> 
-            <Circle
-                x={position.x}
-                y={position.y}
-                width={100}
-                height={100}
-                fill="red"
-                shadowBlur={5}
-                draggable
-                onDragStart={handleDragStart}
-                onDragMove={handleDragMove}
-                onDragEnd={handleDragEnd}/>
-        </Layer>
+        width={window.innerWidth} 
+        height={window.innerHeight} 
+        options={{ background: 0x1099bb }}
+        onPointerDown={handleMouseDown}
+        
+    >
+      <Graphics draw={draw} anchor={[200,200]} />
     </Stage>
   );
-}
+};
+
+export default App
