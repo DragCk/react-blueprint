@@ -25,7 +25,7 @@ const App = () => {
   return (
     <Stage 
         width={window.innerWidth} 
-        height={window.innerHeight} 
+        height={window.innerHeight}   
         options={{ background: 0x1099bb }}
         onPointerDown={handleMouseDown}
         

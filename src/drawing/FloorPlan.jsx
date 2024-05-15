@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Stage, Layer, Line, Circle, Text, Label, Tag } from 'react-konva';
 import { v4 as uuidv4 } from 'uuid';
 import { useSelector, useDispatch } from 'react-redux';
@@ -17,12 +17,16 @@ const Floor = () => {
     const [selectedIntersectionPoint, setSelectedIntersectionPoint] = useState({x:0, y:0})
     const [lineMoving, setLineMoving] = useState(false)
 
+    const stageRef = useRef()
+    const circleRef = useRef()
+
     const { mode } = useSelector((state) => state.mode)
     const { lines } = useSelector((state) => state.lines)
     const dispatch = useDispatch()
     
     
     const gridSize = 20;
+    const gridTableSize = 6000
 
     /* ----------Drawing lines----------- */
 
@@ -31,6 +35,7 @@ const Floor = () => {
     };
 
     const handleMouseDown = (e) => {
+        console.log(circleRef.current.getAbsolutePosition(stageRef.current))
         if( mode === "Drawing")
         {
             const stage = e.target.getStage();
@@ -62,23 +67,21 @@ const Floor = () => {
             
             setTempLine([]);
         }
-        if(mode === "Moving"){
-            console.log("ON Moving")
-        }
+        
     };
 
     /* ----------Draw Grid----------- */
 
     const drawGrid = () => {
         const grid = [];
-        for (let i = 0; i < window.innerWidth; i += gridSize) {
+        for (let i = 0; i < gridTableSize; i += gridSize) {
             const strokesWidth = i % (gridSize * 5) === 0 ? 2 : 0.5
-            grid.push(<Line key={`${i}-y`} points={[i, 0, i, window.innerHeight]} stroke="#ddd" strokeWidth={strokesWidth} />);
+            grid.push(<Line key={`${i}-y`} points={[i, 0, i, gridTableSize]} stroke="#ddd" strokeWidth={strokesWidth} />);
         }
 
-        for (let i = 0; i < window.innerHeight; i += gridSize) {
+        for (let i = 0; i < gridTableSize; i += gridSize) {
             const strokesWidth = i % (gridSize * 5) === 0 ? 2 : 0.5
-            grid.push(<Line key={`${i}-x`} points={[0, i, window.innerWidth, i]} stroke="#ddd" strokeWidth={strokesWidth} />);
+            grid.push(<Line key={`${i}-x`} points={[0, i,gridTableSize, i]} stroke="#ddd" strokeWidth={strokesWidth} />);
         }
 
         return grid;
@@ -330,6 +333,10 @@ const Floor = () => {
     }
 
 
+    const calculateStageOffSet = (window) => {
+        return (gridTableSize - window) / 2
+    }
+
     /* ----------Konva stage resizing----------- */
     const handleResize = () => {
         setWindowWidth(window.innerWidth)
@@ -345,15 +352,23 @@ const Floor = () => {
 
     return (
         <Stage 
-            width={windowWidth} 
-            height={windowHeight} 
+            width={6000} 
+            height={6000} 
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
+            ref={stageRef}
+            draggable
+            offsetX={calculateStageOffSet(windowWidth)}
+            offsetY={calculateStageOffSet(windowHeight)}
         >
             <Layer>
+
                 {lines && drawGrid()}
               
+                <Circle ref={circleRef} x={gridTableSize/2} y={gridTableSize/2} radius={5} fill="red"/>
+
+                
                 {lines.map((line, index) => (
                     <>
                         <Line
