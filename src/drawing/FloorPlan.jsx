@@ -24,9 +24,8 @@ const Floor = () => {
     const { lines } = useSelector((state) => state.lines)
     const dispatch = useDispatch()
     
-    
     const gridSize = 20;
-    const gridTableSize = 6000
+    const gridTableSize = 4000
 
     /* ----------Drawing lines----------- */
 
@@ -35,11 +34,10 @@ const Floor = () => {
     };
 
     const handleMouseDown = (e) => {
-        console.log(circleRef.current.getAbsolutePosition(stageRef.current))
         if( mode === "Drawing")
         {
             const stage = e.target.getStage();
-            const mousePos = stage.getPointerPosition();
+            const mousePos = stage.getRelativePointerPosition();
             const snappedPos = snapToGrid(mousePos.x, mousePos.y);
             setDrawing(true);
             setTempLine([snappedPos[0], snappedPos[1], snappedPos[0], snappedPos[1]]);
@@ -49,7 +47,7 @@ const Floor = () => {
     const handleMouseMove = (e) => {
         if (drawing) {
             const stage = e.target.getStage();
-            const mousePos = stage.getPointerPosition();
+            const mousePos = stage.getRelativePointerPosition();
             const snappedPos = snapToGrid(mousePos.x, mousePos.y);
             setTempLine([tempLine[0], tempLine[1], snappedPos[0], snappedPos[1]]);
         }
@@ -58,34 +56,48 @@ const Floor = () => {
     const handleMouseUp = () => {
         if (drawing) {
             setDrawing(false);
-
             if(tempLine[0] !== tempLine[2] || tempLine[1] !== tempLine[3]) 
             {
-                // setLines([...lines, tempLine]);
-                dispatch(setNewLines(tempLine))
+                dispatch(setNewLines(tempLine))//save in react-redux
             }
-            
             setTempLine([]);
         }
-        
     };
 
     /* ----------Draw Grid----------- */
 
+    // const drawGrid = () => {
+    //     const grid = [];
+    //     for (let i = 0; i < gridTableSize; i += gridSize) {
+    //         const strokesWidth = i % (gridSize * 5) === 0 ? 2 : 0.5
+    //         grid.push(<Line key={`${i}-y`} points={[i, 0, i, gridTableSize]} stroke="#ddd" strokeWidth={strokesWidth} />);
+    //     }
+
+    //     for (let i = 0; i < gridTableSize; i += gridSize) {
+    //         const strokesWidth = i % (gridSize * 5) === 0 ? 2 : 0.5
+    //         grid.push(<Line key={`${i}-x`} points={[0, i,gridTableSize, i]} stroke="#ddd" strokeWidth={strokesWidth} />);
+    //     }
+
+    //     return grid;
+    // };
+    
     const drawGrid = () => {
         const grid = [];
-        for (let i = 0; i < gridTableSize; i += gridSize) {
-            const strokesWidth = i % (gridSize * 5) === 0 ? 2 : 0.5
-            grid.push(<Line key={`${i}-y`} points={[i, 0, i, gridTableSize]} stroke="#ddd" strokeWidth={strokesWidth} />);
+        const halfSize = gridTableSize / 2;
+        
+        for (let i = -halfSize; i <= halfSize; i += gridSize) {
+            const strokeWidth = i % (gridSize * 5) === 0 ? 2 : 0.5;
+            grid.push(<Line key={`${i}-y`} points={[i, -halfSize, i, halfSize]} stroke="#ddd" strokeWidth={strokeWidth} />);
         }
-
-        for (let i = 0; i < gridTableSize; i += gridSize) {
-            const strokesWidth = i % (gridSize * 5) === 0 ? 2 : 0.5
-            grid.push(<Line key={`${i}-x`} points={[0, i,gridTableSize, i]} stroke="#ddd" strokeWidth={strokesWidth} />);
+    
+        for (let i = -halfSize; i <= halfSize; i += gridSize) {
+            const strokeWidth = i % (gridSize * 5) === 0 ? 2 : 0.5;
+            grid.push(<Line key={`${i}-x`} points={[-halfSize, i, halfSize, i]} stroke="#ddd" strokeWidth={strokeWidth} />);
         }
-
+    
         return grid;
     };
+
 
     /* ----------Draw length of Line----------- */
     const calculateLength = (line) => {
@@ -326,15 +338,30 @@ const Floor = () => {
     }
 
     /* ----------Line Dragging by Body----------- */
-    const handleLineMove = (e) => {
-        const {x, y} = e.target.attrs
-        console.log(e.target.absolutePosition())
-        console.log(`Line: x: ${x}, y:${y}`)
+    const handleLineMove = (e, index) => {
+        const {x, y} = e.target.position()
+        const snappedPos = snapToGrid(x, y)
+        console.log(`Move x : ${snappedPos[0]}, y: ${snappedPos[1]}`)
+        
+        const updateLines = [...lines]
+        
+        updateLines[index] = [
+            updateLines[index][0] + snappedPos[0], 
+            updateLines[index][1] + snappedPos[1], 
+            updateLines[index][2] + snappedPos[0], 
+            updateLines[index][3] + snappedPos[1]
+        ]
+        dispatch(setAfterDelete(updateLines))
     }
 
+    /* ----------Calculations----------- */
 
     const calculateStageOffSet = (window) => {
-        return (gridTableSize - window) / 2
+        return (-(window) / 2)
+    }
+
+    const calculationPositionFromCenter = () => {
+        return (circleRef.current.getAbsolutePosition(stageRef.current))
     }
 
     /* ----------Konva stage resizing----------- */
@@ -352,13 +379,13 @@ const Floor = () => {
 
     return (
         <Stage 
-            width={6000} 
-            height={6000} 
+            width={4000} 
+            height={4000} 
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             ref={stageRef}
-            draggable
+            draggable={mode === "Moving" ? true : false}
             offsetX={calculateStageOffSet(windowWidth)}
             offsetY={calculateStageOffSet(windowHeight)}
         >
@@ -366,9 +393,10 @@ const Floor = () => {
 
                 {lines && drawGrid()}
               
-                <Circle ref={circleRef} x={gridTableSize/2} y={gridTableSize/2} radius={5} fill="red"/>
+                <Circle ref={circleRef} x={0} y={0} radius={5} fill="red"/>
 
                 
+
                 {lines.map((line, index) => (
                     <>
                         <Line
@@ -377,7 +405,8 @@ const Floor = () => {
                             stroke="blue"
                             strokeWidth={5}
                             onClick={() => handleDeleteLine(index)}
-
+                            draggable
+                            onDragEnd={e => handleLineMove(e,index)}
                         />
                         <Circle 
                             key={`${index}-start`} x={line[0]} y={line[1]} radius={5} fill="black"
