@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import _ from 'lodash';
 import { Stage, Layer, Line, Circle, Text, Label, Tag } from 'react-konva';
 import { v4 as uuidv4 } from 'uuid';
 import { useSelector, useDispatch } from 'react-redux';
@@ -15,6 +16,7 @@ const Floor = () => {
     const [selectedLineIndex, setSelectedLineIndex] = useState(null);
     const [selectedIntersectionPoint, setSelectedIntersectionPoint] = useState({x:0, y:0})
     const [lineMoving, setLineMoving] = useState(false)
+    const [tempLinePoints, setTempLinePoints] = useState(null)
 
     const stageRef = useRef()
     const circleRef = useRef()
@@ -37,9 +39,9 @@ const Floor = () => {
         
         const stage = e.target?.getStage();
         const mousePos = stage.getRelativePointerPosition();
-        const snappedPos = snapToGrid(mousePos.x, mousePos.y);
+        const [snapX, snapY] = snapToGrid(mousePos.x, mousePos.y);
         setDrawing(true);
-        setTempLine([snappedPos[0], snappedPos[1], snappedPos[0], snappedPos[1]]);
+        setTempLine([snapX, snapY, snapX, snapY]);
         
     };
 
@@ -48,8 +50,8 @@ const Floor = () => {
 
         const stage = e.target?.getStage();
         const mousePos = stage.getRelativePointerPosition();
-        const snappedPos = snapToGrid(mousePos.x, mousePos.y);
-        setTempLine([tempLine[0], tempLine[1], snappedPos[0], snappedPos[1]]);
+        const [snapX, snapY]  = snapToGrid(mousePos.x, mousePos.y);
+        setTempLine([tempLine[0], tempLine[1], snapX, snapY]);
     };
 
     const handleMouseUp = () => {
@@ -68,17 +70,21 @@ const Floor = () => {
     const drawGrid = () => {
         const grid = [];
         const halfSize = gridTableSize / 2;
-        
+
+        const createLine = (key, points, strokeWidth) => (
+            <Line key={key} points={points} stroke="#ddd" strokeWidth={strokeWidth} />
+        );
+
         for (let i = -halfSize; i <= halfSize; i += gridSize) {
             const strokeWidth = i % (gridSize * 5) === 0 ? 2 : 0.5;
-            grid.push(<Line key={`${i}-y`} points={[i, -halfSize, i, halfSize]} stroke="#ddd" strokeWidth={strokeWidth} />);
+            
+            // Vertical line drawing
+            grid.push(createLine(`${i}-y`, [i, -halfSize, i, halfSize], strokeWidth));
+            
+            // Horizontal line drawing
+            grid.push(createLine(`${i}-x`, [-halfSize, i, halfSize, i], strokeWidth));
         }
-    
-        for (let i = -halfSize; i <= halfSize; i += gridSize) {
-            const strokeWidth = i % (gridSize * 5) === 0 ? 2 : 0.5;
-            grid.push(<Line key={`${i}-x`} points={[-halfSize, i, halfSize, i]} stroke="#ddd" strokeWidth={strokeWidth} />);
-        }
-    
+
         return grid;
     };
 
@@ -149,31 +155,36 @@ const Floor = () => {
 
     /* ----------Intersections on start & end point-------------- */
     const findPointIntersections = () => {
-        const overlappingPoints = []
+        const overlappingPoints = [];
+        const pointsSet = new Set();
+    
+        const addPointIfNotExists = (x, y) => {
+            const pointKey = `${x},${y}`;
+            if (!pointsSet.has(pointKey)) {
+                pointsSet.add(pointKey);
+                overlappingPoints.push({ x, y });
+            }
+        };
+    
         lines.forEach((line1, i) => {
             const [x1, y1, x2, y2] = line1;
-        
+    
             lines.slice(i + 1).forEach((line2) => {
                 const [x3, y3, x4, y4] = line2;
-                
-                // 檢查起點是否重疊
+    
+                // Check if start point ovelaps
                 if ((x1 === x3 && y1 === y3) || (x1 === x4 && y1 === y4)) {
-                    const exists = overlappingPoints.some(point => point.x === x1 && point.y === y1);
-                    if (!exists) {
-                        overlappingPoints.push({ x: x1, y: y1});
-                    }
+                    addPointIfNotExists(x1, y1);
                 }
-                // 檢查終點是否重疊
+    
+                // Check if end point ovelaps
                 if ((x2 === x3 && y2 === y3) || (x2 === x4 && y2 === y4)) {
-                    const exists = overlappingPoints.some(point => point.x === x2 && point.y === y2);
-                    if (!exists) {
-                        overlappingPoints.push({ x: x2, y: y2});
-                    }
+                    addPointIfNotExists(x2, y2);
                 }
-                
             });
-          });
-          return overlappingPoints
+        });
+    
+        return overlappingPoints;
     }
 
     const points = findPointIntersections()
@@ -189,61 +200,59 @@ const Floor = () => {
         
     }
 
-    const handleIntesectionMouseMove = (e) => {
-        if(!lineMoving) return
+    // const handleIntesectionMouseMove = (e) => {
+    //     if(!lineMoving) return
 
-        console.log("Movingggg")
-        const {x, y} = e.target?.attrs
+    //     console.log("Movingggg")
+    //     const {x, y} = e.target?.attrs
         
-        const updateLines = [...lines]
-        updateLines.map((line) =>{
-            if(line[0] <= selectedIntersectionPoint.x + 5 && line[0] >= selectedIntersectionPoint.x - 5){
-                if(line[1] <= selectedIntersectionPoint.y + 5 && line[1] >= selectedIntersectionPoint.y - 5)
-                {
-                    line[0] = x
-                    line[1] = y
-                }
-            } 
-            if(line[2] <= selectedIntersectionPoint.x + 5 && line[2] >= selectedIntersectionPoint.x - 5){
-                if(line[3] <= selectedIntersectionPoint.y + 5 && line[3] >= selectedIntersectionPoint.y - 5)
-            { 
-                    line[2] = x
-                    line[3] = y
-                }
-            } 
-        })
-        setLines(updateLines)  
+    //     const updateLines = [...lines]
+    //     updateLines.map((line) =>{
+    //         let [x1,y1,x2,y2] = line
+    //         if(x1 <= selectedIntersectionPoint.x + 5 && x1 >= selectedIntersectionPoint.x - 5){
+    //             if(y1 <= selectedIntersectionPoint.y + 5 && y1 >= selectedIntersectionPoint.y - 5)
+    //             {
+    //                 x1 = x
+    //                 y1 = y
+    //             }
+    //         } 
+    //         if(x2 <= selectedIntersectionPoint.x + 5 && x2 >= selectedIntersectionPoint.x - 5){
+    //             if(y2 <= selectedIntersectionPoint.y + 5 && y2 >= selectedIntersectionPoint.y - 5)
+    //         { 
+    //                 x2 = x
+    //                 y2 = y
+    //             }
+    //         } 
+    //     })
+    //     setLines(updateLines)  
         
-    } 
+    // } 
 
 
     const hadleIntersectionMouseUp = (e) => {
         
-        if(!lineMoving) return 
-            
-        const {x, y} = e.target?.attrs
-        const snappedPos = snapToGrid(x , y);
-        const updateLines = lines.map((line) =>{
-            
-            if(line[0] <= selectedIntersectionPoint.x + 5 && line[0] >= selectedIntersectionPoint.x - 5){
-                if(line[1] <= selectedIntersectionPoint.y + 5 && line[1] >= selectedIntersectionPoint.y - 5)
-                {
-                    return [snappedPos[0], snappedPos[1], line[2], line[3]];
-                }
-            } 
-            if(line[2] <= selectedIntersectionPoint.x + 5 && line[2] >= selectedIntersectionPoint.x - 5){
-                if(line[3] <= selectedIntersectionPoint.y + 5 && line[3] >= selectedIntersectionPoint.y - 5)
-                { 
-                return [line[0], line[1], snappedPos[0], snappedPos[1]];
-                }
-            } 
-            return line;
-        })
+        if (!lineMoving) return;
+    
+        const { x, y } = e.target?.attrs;
+        const [snapX, snapY] = snapToGrid(x, y);
+    
+        const isNearSelectedPoint = (px, py) => (
+            px <= selectedIntersectionPoint.x + 5 && px >= selectedIntersectionPoint.x - 5 &&
+            py <= selectedIntersectionPoint.y + 5 && py >= selectedIntersectionPoint.y - 5
+        );
+    
+        const updateLines = lines.map((line) => {
+            const [x1, y1, x2, y2] = line;
+    
+            if (isNearSelectedPoint(x1, y1))  return [snapX, snapY, x2, y2];
+    
+            if (isNearSelectedPoint(x2, y2))  return [x1, y1, snapX, snapY];
 
-        dispatch(setAfterDelete(updateLines))
-        setLineMoving(false)
-        
-        
+            return line;
+        });
+    
+        dispatch(setAfterDelete(updateLines));
+        setLineMoving(false);
     }
 
 
@@ -292,54 +301,106 @@ const Floor = () => {
     };
 
     const handleOnDrag = (e, position) => {
-        if( mode !== "Moving") return 
-
-        const {x, y} = e.target?.attrs
-        const updateLine = [...lines] 
+        if (mode !== "Moving") return;
         
-        if(position === "start")
-        {updateLine[selectedLineIndex] = [x, y, updateLine[selectedLineIndex][2], updateLine[selectedLineIndex][3]]}
-        if( position === "end")
-        {updateLine[selectedLineIndex] = [updateLine[selectedLineIndex][0], updateLine[selectedLineIndex][1],x, y]}
-        dispatch(setAfterDelete(updateLine))
+
+        const { x, y } = e.target?.attrs;
+        const updatedLines = [...lines];
+
+        const updateLine = (index, startX, startY, endX, endY) => {
+            updatedLines[index] = [startX, startY, endX, endY];
+        };
+        
+        const currentLine = updatedLines[selectedLineIndex];
+        const [x1, y1, x2, y2] = currentLine;
+
+        if (position === "start") {
+            updateLine(selectedLineIndex, x, y, x2, y2);
+        } else if (position === "end") {
+            updateLine(selectedLineIndex, x1, y1, x, y);
+        }
+
+        dispatch(setAfterDelete(updatedLines));
         
     }
 
     const handleDragEnd = (e, position) => {
-        if( mode !== "Moving") return 
+        if (mode !== "Moving") return;
 
-        const {x, y} = e.target?.attrs
-        const snappedPos = snapToGrid(x, y);
-        const updateLine = [...lines]
-
-        if(position === "start")
-        {updateLine[selectedLineIndex] = [snappedPos[0], snappedPos[1] , updateLine[selectedLineIndex][2], updateLine[selectedLineIndex][3]]}
-        if(position === "end")
-        {updateLine[selectedLineIndex] = [updateLine[selectedLineIndex][0], updateLine[selectedLineIndex][1], snappedPos[0], snappedPos[1]]}
-        dispatch(setAfterDelete(updateLine))
-        setSelectedLineIndex(null)
+        const { x, y } = e.target?.attrs;
+        const [snapX, snapY] = snapToGrid(x, y);
+        const updatedLines = [...lines];
+    
+        const updateLine = (index, newX1, newY1, newX2, newY2) => {
+            updatedLines[index] = [newX1, newY1, newX2, newY2];
+        };
+    
+        const currentLine = updatedLines[selectedLineIndex];
+        const [x1, y1, x2, y2] = currentLine;
+    
+        if (position === "start") {
+            updateLine(selectedLineIndex, snapX, snapY, x2, y2);
+        } else if (position === "end") {
+            updateLine(selectedLineIndex, x1, y1, snapX, snapY);
+        }
+    
+        dispatch(setAfterDelete(updatedLines));
+        setSelectedLineIndex(null);
         
     }
 
    
     /* ----------Line Dragging by Body----------- */
-    const handleLineMove = (e, index) => {
-        const {x, y} = e.target?.position()
-        const snappedPos = snapToGrid(x, y)
-        console.log(`Move x : ${snappedPos[0]}, y: ${snappedPos[1]}`)
+    const handleLineMoveStart = (e) => {
         
-        const updateLines = [...lines]
-        
-        updateLines[index] = [
-            updateLines[index][0] + snappedPos[0], 
-            updateLines[index][1] + snappedPos[1], 
-            updateLines[index][2] + snappedPos[0], 
-            updateLines[index][3] + snappedPos[1]
-        ]
-        //Line position solve with https://stackoverflow.com/questions/73631342/konva-line-drag
-        e.target.position({ x: 0, y: 0 })
-        dispatch(setAfterDelete(updateLines))
+        const [x1,y1,x2,y2] = e.target.attrs.points
+        setTempLinePoints({x1,y1,x2,y2})
     }
+
+
+    const handleLineMove = (e) => {
+        const { x, y } = e.target?.position();
+        const [snapX, snapY] = snapToGrid(x, y);
+    
+        const isMatchingLine = (line, points) => {
+            const [x1, y1, x2, y2] = line;
+            const { x1: px1, y1: py1, x2: px2, y2: py2 } = points;
+            return (
+                (x1 === px1 && y1 === py1 && x2 === px2 && y2 === py2) ||
+                (x2 === px1 && y2 === py1 && x1 === px2 && y1 === py2)
+            );
+        };
+    
+        const isMatchingPoint = (x, y, points) => {
+            const { x1, y1, x2, y2 } = points;
+            return (x === x1 && y === y1) || (x === x2 && y === y2);
+        };
+    
+        const updateLines = lines.map(line => {
+            const [x1, y1, x2, y2] = line;
+    
+            if (isMatchingLine(line, tempLinePoints)) {
+                return [x1 + snapX, y1 + snapY, x2 + snapX, y2 + snapY];
+            }
+    
+            if (isMatchingPoint(x1, y1, tempLinePoints)) {
+                return [x1 + snapX, y1 + snapY, x2, y2];
+            }
+    
+            if (isMatchingPoint(x2, y2, tempLinePoints)) {
+                return [x1, y1, x2 + snapX, y2 + snapY];
+            }
+    
+            return line;
+        });
+    
+        e.target.position({ x: 0, y: 0 });
+        setTempLinePoints(null);
+        dispatch(setAfterDelete(updateLines));
+    }
+
+    //Line position solve with https://stackoverflow.com/questions/73631342/konva-line-drag
+       
 
     /* ----------Calculations----------- */
 
@@ -396,6 +457,7 @@ const Floor = () => {
                             strokeWidth={5}
                             onClick={() => handleDeleteLine(index)}
                             draggable={mode === "Moving" ? true : false}
+                            onDragStart={handleLineMoveStart}
                             onDragEnd={e => handleLineMove(e,index)}
                             hitStrokeWidth={10}
                         />
