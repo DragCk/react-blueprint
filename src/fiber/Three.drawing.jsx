@@ -1,10 +1,10 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
 /* eslint-disable react/no-unknown-property */
-import {Suspense} from "react"
-import { Environment,  Html} from "@react-three/drei"
+import { Suspense } from "react"
+import { Environment } from "@react-three/drei"
 import { Canvas } from "@react-three/fiber"
-import { useSelector, useDispatch } from "react-redux"
+import { useSelector } from "react-redux"
 
 import Floor from "./components/Floor"
 import Walls from "./components/Walls"
@@ -15,12 +15,8 @@ import Camera from "./components/Camera"
 
 import * as THREE from "three"
 
-
-
 const ThreeDrawing = ({models}) => { 
     const {lines} = useSelector((state) => state.lines)
-    
-    const dispatch = useDispatch() 
 
     /*--------Find Closed Shapes--------*/
     function findClosedShapes(coordinates) {
@@ -71,33 +67,31 @@ const ThreeDrawing = ({models}) => {
     /*--------Find Intersections--------*/
     const findIntersections = () => {
         const intersections = [];
-      
+
         lines.forEach((line1, i) => {
-          const [x1, y1, x2, y2] = line1;
-      
-          lines.slice(i + 1).forEach((line2) => {
-            const [x3, y3, x4, y4] = line2;
-      
-            const denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-      
-            if (denominator === 0) return;
-      
-            const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denominator;
-            const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denominator;
-      
-            if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
-              const intersectionX = x1 + t * (x2 - x1);
-              const intersectionY = y1 + t * (y2 - y1);
-              const intersectionPoint = { x: intersectionX, y: intersectionY };
-      
-              // 檢查是否已存在相同的交點，如果不存在則加入 intersections 中
-              if (!intersections.some((point) => point.x === intersectionX && point.y === intersectionY)) {
-                intersections.push(intersectionPoint);
-              }
+            const [x1, y1, x2, y2] = line1;
+    
+            for (let j = i + 1; j < lines.length; j++) {
+                const [x3, y3, x4, y4] = lines[j];
+    
+                const denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+                if (denominator === 0) continue;
+    
+                const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denominator;
+                const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denominator;
+    
+                if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+                    const intersectionX = x1 + t * (x2 - x1);
+                    const intersectionY = y1 + t * (y2 - y1);
+                    const intersectionPoint = { x: intersectionX, y: intersectionY };
+    
+                    if (!intersections.some(point => Math.abs(point.x - intersectionX) < Number.EPSILON && Math.abs(point.y - intersectionY) < Number.EPSILON)) {
+                        intersections.push(intersectionPoint);
+                    }
+                }
             }
-          });
         });
-        
+    
         return intersections;
     };
 
@@ -105,29 +99,26 @@ const ThreeDrawing = ({models}) => {
 
     /*--------Find center of scene--------*/
     const findCenterOfScene = (points) => {
-        if (points.length === 0) return { x: 0, y: 0 };
+        if (points.length === 0) return [0, 0];
 
-        // 初始化總和
         let sumX = 0;
         let sumY = 0;
 
-        // 將所有點的座標加總
         for (let i = 0; i < points.length; i++) {
             sumX += points[i].x;
             sumY += points[i].y;
         }
 
-        // 計算平均值
         const centerX = sumX / points.length;
         const centerY = sumY / points.length;
 
-        return { x: centerX, y: centerY };
+        return [centerX, centerY];
     }
 
-    const center = findCenterOfScene(intersection)
+    const [centerX, centerY] = findCenterOfScene(intersection)
     
-    const originPositionX = center.x ? center.x : lines[0][0]
-    const originPositionZ = center.y ? center.y : lines[0][1]
+    const originPositionX = centerX ? centerX : 0
+    const originPositionZ = centerY ? centerY : 0
     
    
 

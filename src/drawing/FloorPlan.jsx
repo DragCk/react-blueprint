@@ -19,8 +19,7 @@ const Floor = () => {
     const [tempLinePoints, setTempLinePoints] = useState(null)
 
     const stageRef = useRef()
-    const circleRef = useRef()
-
+    
     const { mode } = useSelector((state) => state.mode)
     const { lines } = useSelector((state) => state.lines)
     const dispatch = useDispatch()
@@ -47,7 +46,7 @@ const Floor = () => {
 
     const handleMouseMove = (e) => {
         if (!drawing) return
-
+        
         const stage = e.target?.getStage();
         const mousePos = stage.getRelativePointerPosition();
         const [snapX, snapY]  = snapToGrid(mousePos.x, mousePos.y);
@@ -310,7 +309,7 @@ const Floor = () => {
         const updateLine = (index, startX, startY, endX, endY) => {
             updatedLines[index] = [startX, startY, endX, endY];
         };
-        
+       
         const currentLine = updatedLines[selectedLineIndex];
         const [x1, y1, x2, y2] = currentLine;
 
@@ -326,7 +325,7 @@ const Floor = () => {
 
     const handleDragEnd = (e, position) => {
         if (mode !== "Moving") return;
-
+        
         const { x, y } = e.target?.attrs;
         const [snapX, snapY] = snapToGrid(x, y);
         const updatedLines = [...lines];
@@ -408,10 +407,6 @@ const Floor = () => {
         return (-(window) / 2)
     }
 
-    const calculationPositionFromCenter = () => {
-        return (circleRef.current.getAbsolutePosition(stageRef.current))
-    }
-
     /* ----------Konva stage resizing----------- */
     const handleResize = () => {
         setWindowWidth(window.innerWidth)
@@ -427,8 +422,8 @@ const Floor = () => {
 
     return (
         <Stage 
-            width={4000} 
-            height={4000} 
+            width={window.innerWidth} 
+            height={window.innerHeight} 
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -437,11 +432,13 @@ const Floor = () => {
             offsetX={calculateStageOffSet(windowWidth)}
             offsetY={calculateStageOffSet(windowHeight)}
         >
-            <Layer>
+            <Layer
+                listening={false}
+            >
                 {/* ------------Default Grid and center drawing---------------- */}
                 {lines && drawGrid()}
         
-                <Circle ref={circleRef} x={0} y={0} radius={5} fill="red"/>
+                <Circle x={0} y={0} radius={5} fill="red"/>
                 {/* ------------Default Grid and center drawing---------------- */}
             </Layer>
 
@@ -450,6 +447,7 @@ const Floor = () => {
                 {/* ------------Line drawing---------------- */}
                 {lines.map((line, index) => (
                     <>
+                        {console.log("render")}
                         <Line
                             key={index}
                             points={line}
@@ -460,13 +458,15 @@ const Floor = () => {
                             onDragStart={handleLineMoveStart}
                             onDragEnd={e => handleLineMove(e,index)}
                             hitStrokeWidth={10}
+                            perfectDrawEnabled={false}
                         />
                         <Circle 
                             key={`${index}-start`} x={line[0]} y={line[1]} radius={5} fill="black"
                             onDragStart={() => handleDragStart(index)}
                             onDragMove={(e) => handleOnDrag(e,"start") }
                             onDragEnd={(e) => handleDragEnd(e,"start")}
-                            draggable={mode === "Moving" ? true : false}    
+                            draggable={mode === "Moving" ? true : false} 
+                            perfectDrawEnabled={false}   
                         />
                         <Circle 
                             key={`${index}-end`} x={line[2]} y={line[3]} radius={5} fill="black"
@@ -474,6 +474,8 @@ const Floor = () => {
                             onDragMove={(e) => handleOnDrag(e,"end") }
                             onDragEnd={(e) => handleDragEnd(e,"end")}
                             draggable={mode === "Moving" ? true : false}
+                            perfectDrawEnabled={false}
+                            
                         />
                         
                         {drawDimensionLine(line, index)}
@@ -490,11 +492,11 @@ const Floor = () => {
                 
                 {/* ------------Templine drawing---------------- */}
                 {tempLine && (
-                    <React.Fragment key="tempLine">
+                    <>
                         <Line points={tempLine} stroke="red" strokeWidth={5} key={uuidv4()} />
                         {drawDimensionLine(tempLine, 'tempLine-dimension')}
                         {/* {lines.length > 0 && drawAngle(lines[lines.length - 1], tempLine)} */}
-                    </React.Fragment>
+                    </>
                 )}
                 {/* ------------Templine drawing---------------- */}
 
@@ -514,6 +516,7 @@ const Floor = () => {
                     draggable={mode === "Moving" ? true : false}
                     onDragStart={handleIntersectionMouseDown}
                     onDragEnd={hadleIntersectionMouseUp}
+            
                     />
                 ))}
                 {/* ---------------Start/end point intersection drawing---------------- */}
