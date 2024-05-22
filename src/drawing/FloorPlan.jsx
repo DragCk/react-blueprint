@@ -186,9 +186,28 @@ const Floor = () => {
         return overlappingPoints;
     }
 
+    function findUniqueVertices() {
+        const verticesSet = new Set();
+      
+        lines.forEach(([x1, y1, x2, y2]) => {
+          verticesSet.add(`${x1},${y1}`);
+          verticesSet.add(`${x2},${y2}`);
+        });
+      
+        const uniqueVertices = Array.from(verticesSet).map(vertex => {
+          const [x, y] = vertex.split(',').map(Number);
+          return { x, y };
+        });
+      
+        return uniqueVertices;
+    }
+      
+    const uniqueVertices = findUniqueVertices();
+    //console.log("所有唯一的頂點座標:", uniqueVertices);
+
     const points = findPointIntersections()
 
-    /* ----------Start/End intersection point dragging----------- */
+    /* ----------Point dragging----------- */
     
     const handleIntersectionMouseDown = (e) => {
         if(mode !== "Moving") return
@@ -196,36 +215,32 @@ const Floor = () => {
         const {x, y} = e.target?.attrs
         setSelectedIntersectionPoint({x, y})
         setLineMoving(true)
-        
     }
 
-    // const handleIntesectionMouseMove = (e) => {
-    //     if(!lineMoving) return
+    const handleIntesectionMouseMove = (e) => {
+        if (!lineMoving) return;
+        console.log("count")
+        const { x, y } = e.target?.attrs;
+        const [snapX, snapY] = snapToGrid(x, y);
+    
+        const isNearSelectedPoint = (px, py) => (
+            px <= selectedIntersectionPoint.x + 5 && px >= selectedIntersectionPoint.x - 5 &&
+            py <= selectedIntersectionPoint.y + 5 && py >= selectedIntersectionPoint.y - 5
+        );
+    
+        const updateLines = lines.map((line) => {
+            const [x1, y1, x2, y2] = line;
+    
+            if (isNearSelectedPoint(x1, y1))  return [snapX, snapY, x2, y2];
+    
+            if (isNearSelectedPoint(x2, y2))  return [x1, y1, snapX, snapY];
 
-    //     console.log("Movingggg")
-    //     const {x, y} = e.target?.attrs
+            return line;
+        });
+    
+        dispatch(setAfterDelete(updateLines));
         
-    //     const updateLines = [...lines]
-    //     updateLines.map((line) =>{
-    //         let [x1,y1,x2,y2] = line
-    //         if(x1 <= selectedIntersectionPoint.x + 5 && x1 >= selectedIntersectionPoint.x - 5){
-    //             if(y1 <= selectedIntersectionPoint.y + 5 && y1 >= selectedIntersectionPoint.y - 5)
-    //             {
-    //                 x1 = x
-    //                 y1 = y
-    //             }
-    //         } 
-    //         if(x2 <= selectedIntersectionPoint.x + 5 && x2 >= selectedIntersectionPoint.x - 5){
-    //             if(y2 <= selectedIntersectionPoint.y + 5 && y2 >= selectedIntersectionPoint.y - 5)
-    //         { 
-    //                 x2 = x
-    //                 y2 = y
-    //             }
-    //         } 
-    //     })
-    //     setLines(updateLines)  
-        
-    // } 
+    } 
 
 
     const hadleIntersectionMouseUp = (e) => {
@@ -438,7 +453,7 @@ const Floor = () => {
                 {/* ------------Default Grid and center drawing---------------- */}
                 {lines && drawGrid()}
         
-                <Circle x={0} y={0} radius={5} fill="red"/>
+                <Circle x={0} y={0} radius={5} fill="black"/>
                 {/* ------------Default Grid and center drawing---------------- */}
             </Layer>
 
@@ -447,7 +462,6 @@ const Floor = () => {
                 {/* ------------Line drawing---------------- */}
                 {lines.map((line, index) => (
                     <>
-                        {console.log(lines)}
                         <Line
                             key={index}
                             points={line}
@@ -460,44 +474,39 @@ const Floor = () => {
                             hitStrokeWidth={10}
                             perfectDrawEnabled={false}
                         />
-                        <Circle 
-                            key={`${index}-start`} 
-                            x={line[0]} 
-                            y={line[1]} 
-                            radius={5} 
-                            fill="black"
-                            onDragStart={() => handleDragStart(index)}
-                            onDragMove={(e) => handleOnDrag(e,"start") }
-                            onDragEnd={(e) => handleDragEnd(e,"start")}
-                            draggable={mode === "Moving" ? true : false} 
-                            perfectDrawEnabled={false}   
-                        />
-                        <Circle 
-                            key={`${index}-end`} 
-                            x={line[2]} 
-                            y={line[3]} 
-                            radius={5} 
-                            fill="black"
-                            onDragStart={() => handleDragStart(index)}
-                            onDragMove={(e) => handleOnDrag(e,"end") }
-                            onDragEnd={(e) => handleDragEnd(e,"end")}
-                            draggable={mode === "Moving" ? true : false}
-                            perfectDrawEnabled={false}
-                            
-                        />
-                        
+
                         {drawDimensionLine(line, index)}
-                        
                     </>
                 ))}
                 {/* ------------Line drawing---------------- */}
+
+                {/* ---------------Start/end point intersection drawing---------------- */}
+                {uniqueVertices.map((point, index) => (
+                    <Circle 
+                        key={`${index}-points`} 
+                        x={point.x}
+                        y={point.y} 
+                        radius={6} 
+                        fill="red" 
+                        draggable={mode === "Moving" ? true : false}
+                        onDragStart={handleIntersectionMouseDown}
+                        onDragMove={handleIntesectionMouseMove}
+                        onDragEnd={hadleIntersectionMouseUp}
+                    />
+                ))}
+                {/* ---------------Start/end point intersection drawing---------------- */}
 
 
                 {/* {lines.slice(0, -1).map((line, index) => (
                     drawAngle(line, lines[index + 1])
                 ))} */}
 
+                {/* {intersection.map((point, i) => (
+                    <Circle key={`${i}-intersection`} x={point.x} y={point.y} radius={5} fill="red" />
+                ))} */}
                 
+                
+
                 {/* ------------Templine drawing---------------- */}
                 {tempLine && (
                     <>
@@ -507,28 +516,6 @@ const Floor = () => {
                     </>
                 )}
                 {/* ------------Templine drawing---------------- */}
-
-
-                {/* {intersection.map((point, i) => (
-                    <Circle key={`${i}-intersection`} x={point.x} y={point.y} radius={5} fill="red" />
-                ))} */}
-                
-                {/* ---------------Start/end point intersection drawing---------------- */}
-                {points.map((point, index) => (
-                <Circle 
-                    key={`${index}-points`} 
-                    x={point.x}
-                    y={point.y} 
-                    radius={6} 
-                    fill="red" 
-                    draggable={mode === "Moving" ? true : false}
-                    onDragStart={handleIntersectionMouseDown}
-                    onDragEnd={hadleIntersectionMouseUp}
-            
-                    />
-                ))}
-                {/* ---------------Start/end point intersection drawing---------------- */}
-
 
             </Layer>
         </Stage>

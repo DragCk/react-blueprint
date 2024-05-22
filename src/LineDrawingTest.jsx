@@ -18,11 +18,15 @@ const App = () => {
   const [lines, setLines] = useState([]);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentLine, setCurrentLine] = useState([]);
+  const [startPoint, setStartPoint] = useState({ x: 0, y: 0 });
 
   const handleStageClick = (e) => {
     if (!isDrawing) {
       setCurrentLine([]);
       setIsDrawing(true);
+      const stage = e.target.getStage();
+      const pointerPosition = stage.getPointerPosition();
+      setStartPoint(pointerPosition);
     }
 
     const stage = e.target.getStage();
@@ -39,7 +43,7 @@ const App = () => {
     setCurrentLine((prevLine) => [...prevLine, newCircle]);
 
     if (currentLine.length > 0) {
-      const from = currentLine[currentLine.length - 1];
+      const from = startPoint;
       const to = newCircle;
       setLines((prevLines) => [
         ...prevLines,
@@ -75,6 +79,18 @@ const App = () => {
       y: e.target.y()
     };
     setCircles(updatedCircles);
+    setCurrentLine((prevLine) => {
+      const updatedLine = prevLine.slice();
+      updatedLine[index] = {
+        ...updatedLine[index],
+        x: e.target.x(),
+        y: e.target.y()
+      };
+      return updatedLine;
+    });
+    if (index === 0) {
+      setStartPoint({ x: e.target.x(), y: e.target.y() });
+    }
     updateLines(updatedCircles);
   };
 
@@ -107,3 +123,4 @@ const App = () => {
 };
 
 export default App;
+
