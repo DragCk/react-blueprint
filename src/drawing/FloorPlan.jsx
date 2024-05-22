@@ -19,7 +19,7 @@ const Floor = () => {
     const [tempLinePoints, setTempLinePoints] = useState(null)
 
     const stageRef = useRef()
-    
+
     const { mode } = useSelector((state) => state.mode)
     const { lines } = useSelector((state) => state.lines)
     const dispatch = useDispatch()
@@ -447,7 +447,7 @@ const Floor = () => {
                 {/* ------------Line drawing---------------- */}
                 {lines.map((line, index) => (
                     <>
-                        {console.log("render")}
+                        {console.log(lines)}
                         <Line
                             key={index}
                             points={line}
@@ -461,7 +461,11 @@ const Floor = () => {
                             perfectDrawEnabled={false}
                         />
                         <Circle 
-                            key={`${index}-start`} x={line[0]} y={line[1]} radius={5} fill="black"
+                            key={`${index}-start`} 
+                            x={line[0]} 
+                            y={line[1]} 
+                            radius={5} 
+                            fill="black"
                             onDragStart={() => handleDragStart(index)}
                             onDragMove={(e) => handleOnDrag(e,"start") }
                             onDragEnd={(e) => handleDragEnd(e,"start")}
@@ -469,7 +473,11 @@ const Floor = () => {
                             perfectDrawEnabled={false}   
                         />
                         <Circle 
-                            key={`${index}-end`} x={line[2]} y={line[3]} radius={5} fill="black"
+                            key={`${index}-end`} 
+                            x={line[2]} 
+                            y={line[3]} 
+                            radius={5} 
+                            fill="black"
                             onDragStart={() => handleDragStart(index)}
                             onDragMove={(e) => handleOnDrag(e,"end") }
                             onDragEnd={(e) => handleDragEnd(e,"end")}
