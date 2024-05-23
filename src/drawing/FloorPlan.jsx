@@ -2,7 +2,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import _ from 'lodash';
-import { Stage, Layer, Line, Circle, Text, Label, Tag } from 'react-konva';
+import { Stage, Layer, Line, Circle, Text, Label, Tag , Node} from 'react-konva';
 import { v4 as uuidv4 } from 'uuid';
 import { useSelector, useDispatch } from 'react-redux';
 import { setNewLines, setAfterDelete } from "../redux/features/lines"
