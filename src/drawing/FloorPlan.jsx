@@ -490,7 +490,6 @@ const Floor = () => {
                         fill="red" 
                         draggable={mode === "Moving" ? true : false}
                         onDragStart={handleIntersectionMouseDown}
-                        onDragMove={handleIntesectionMouseMove}
                         onDragEnd={hadleIntersectionMouseUp}
                     />
                 ))}

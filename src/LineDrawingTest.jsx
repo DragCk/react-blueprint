@@ -1,126 +1,71 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Stage, Layer, Circle, Line } from 'react-konva';
-
-const DraggableCircle = React.forwardRef(({ x, y, color, onDragMove }, ref) => (
-  <Circle
-    x={x}
-    y={y}
-    radius={10}
-    fill={color}
-    draggable
-    ref={ref}
-    onDragMove={onDragMove}
-  />
-));
 
 const App = () => {
   const [circles, setCircles] = useState([]);
   const [lines, setLines] = useState([]);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [currentLine, setCurrentLine] = useState([]);
-  const [startPoint, setStartPoint] = useState({ x: 0, y: 0 });
+  const [tempLine, setTempLine] = useState(null)
+  const [prevPoint, setPrevPoint] = useState(null);
+  const radius = 10;
+  const proximityThreshold = 15; // Adjust this value as needed for proximity checking
 
-  const handleStageClick = (e) => {
-    if (!isDrawing) {
-      setCurrentLine([]);
-      setIsDrawing(true);
-      const stage = e.target.getStage();
-      const pointerPosition = stage.getPointerPosition();
-      setStartPoint(pointerPosition);
-    }
-
+  const handleMouseDown = (e) => {
     const stage = e.target.getStage();
-    const pointerPosition = stage.getPointerPosition();
+    const mousePos = stage.getRelativePointerPosition();
+    let closestCircle = null;
+    let minDistance = proximityThreshold;
 
-    const newCircle = {
-      id: `circle-${circles.length}`,
-      x: pointerPosition.x,
-      y: pointerPosition.y,
-      ref: React.createRef()
-    };
+    // Find the closest circle
+    for (const circle of circles) {
+      const dx = mousePos.x - circle[0];
+      const dy = mousePos.y - circle[1];
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance < minDistance) {
+        closestCircle = circle;
+        minDistance = distance;
+      }
+    }
 
-    setCircles((prevCircles) => [...prevCircles, newCircle]);
-    setCurrentLine((prevLine) => [...prevLine, newCircle]);
+    // If a circle is close enough, start the line from that circle
+    if (closestCircle) {
+      if (prevPoint) {
+        const newLine = [...prevPoint, closestCircle[0], closestCircle[1]];
+        setLines((prevLines) => [...prevLines, newLine]);
+        setPrevPoint(null);
+      } else {
+        setPrevPoint(closestCircle);
+      }
+      
+    } else {
+      // Otherwise, create a new circle and start a new line from there
+      const newCircle = [mousePos.x, mousePos.y];
+      setCircles((prevCircles) => [...prevCircles, newCircle]);
 
-    if (currentLine.length > 0) {
-      const from = startPoint;
-      const to = newCircle;
-      setLines((prevLines) => [
-        ...prevLines,
-        { points: [from.x, from.y, to.x, to.y] }
-      ]);
+      if (prevPoint) {
+        const newLine = [...prevPoint, mousePos.x, mousePos.y];
+        setLines((prevLines) => [...prevLines, newLine]);
+      }
+      setPrevPoint([mousePos.x, mousePos.y]);
     }
   };
-
-  const handleEscKey = (e) => {
-    if (e.key === 'Escape') {
-      setIsDrawing(false);
-      setCurrentLine([]);
-    }
-  };
-
-  const updateLines = (updatedCircles) => {
-    const newLines = [];
-    for (let i = 0; i < updatedCircles.length - 1; i++) {
-      const from = updatedCircles[i];
-      const to = updatedCircles[i + 1];
-      newLines.push({
-        points: [from.x, from.y, to.x, to.y]
-      });
-    }
-    setLines(newLines);
-  };
-
-  const handleDragMove = (index, e) => {
-    const updatedCircles = circles.slice();
-    updatedCircles[index] = {
-      ...updatedCircles[index],
-      x: e.target.x(),
-      y: e.target.y()
-    };
-    setCircles(updatedCircles);
-    setCurrentLine((prevLine) => {
-      const updatedLine = prevLine.slice();
-      updatedLine[index] = {
-        ...updatedLine[index],
-        x: e.target.x(),
-        y: e.target.y()
-      };
-      return updatedLine;
-    });
-    if (index === 0) {
-      setStartPoint({ x: e.target.x(), y: e.target.y() });
-    }
-    updateLines(updatedCircles);
-  };
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleEscKey);
-    return () => {
-      window.removeEventListener('keydown', handleEscKey);
-    };
-  }, []);
 
   return (
-    <Stage width={window.innerWidth} height={window.innerHeight} onClick={handleStageClick}>
+    <Stage
+      width={window.innerWidth}
+      height={window.innerHeight}
+      onMouseDown={handleMouseDown}
+    >
       <Layer>
-        {circles.map((circle, index) => (
-          <DraggableCircle
-            key={circle.id}
-            x={circle.x}
-            y={circle.y}
-            color="red"
-            ref={circle.ref}
-            onDragMove={(e) => handleDragMove(index, e)}
-          />
-        ))}
         {lines.map((line, index) => (
-          <Line key={index} points={line.points} stroke="#666666" strokeWidth={2} />
+          <Line key={index} points={line} draggable stroke="red" strokeWidth={5} />
         ))}
+        {circles.map((circle, index) => (
+          <Circle key={index} x={circle[0]} y={circle[1]} radius={radius} fill="blue" />
+        ))}
+        {console.log(lines)}
       </Layer>
     </Stage>
   );
 };
 
 export default App;
-
