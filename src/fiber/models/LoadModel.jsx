@@ -5,6 +5,17 @@ import { applyProps } from "@react-three/fiber";
 import { useState, useEffect, useMemo } from "react";
 import { Box, Button, Typography, Container } from "@mui/material";
 
+const clonedTextures = (textures) => {
+    return textures.map((tex) => ({
+      map: tex.map ? tex.map.clone() : null,
+      displacementMap: tex.displacementMap ? tex.displacementMap.clone() : null,
+      metalnessMap: tex.metalnessMap ? tex.metalnessMap.clone() : null,
+      normalMap: tex.normalMap ? tex.normalMap.clone() : null,
+      roughnessMap: tex.roughnessMap ? tex.roughnessMap.clone() : null,
+    }));
+  };
+
+
 const LoadModel = ({model}) => {
     
     const gltf = useGLTF(model.path)
@@ -18,9 +29,10 @@ const LoadModel = ({model}) => {
 
     /* -------------Textures setup-------------- */
     const textures = model.texture ? model.texture.map((tex) => useTexture(tex)) : []
+    const copiedTextures = useMemo(() => clonedTextures(textures), [textures]);
     
-
-    textures.map((tex)=> {
+    console.log(copiedTextures)
+    copiedTextures.map((tex)=> {
         tex.map.flipY = false
         model.textureRepeat ? tex.map.repeat.x = -1 : null
         tex.normalMap ? tex.normalMap.flipY = false : null
@@ -59,13 +71,13 @@ const LoadModel = ({model}) => {
                     'material-displacementScale': 0,
                     'material-metalness' : 0,
                 })
-                if(model.texture){
+                if(copiedTextures){
                     console.log("")
-                    o.material.map = textures[0].map || null
-                    o.material.normalMap = textures[0].normalMap || null
-                    o.material.metalnessMap = textures[0].metalnessMap || null
-                    o.material.displacementMap = textures[0].displacementMap || null
-                    o.material.roughnessMap = textures[0].roughnessMap || null
+                    o.material.map = copiedTextures[0].map || null
+                    o.material.normalMap = copiedTextures[0].normalMap || null
+                    o.material.metalnessMap = copiedTextures[0].metalnessMap || null
+                    o.material.displacementMap = copiedTextures[0].displacementMap || null
+                    o.material.roughnessMap = copiedTextures[0].roughnessMap || null
                 }
             }
             
@@ -99,7 +111,7 @@ const LoadModel = ({model}) => {
                                     {model.texture ?
                                     (  
                                         <Container>
-                                           {textures.map((texture,index)=> {
+                                           {copiedTextures.map((texture,index)=> {
                                                 return (<Button onClick={() => {handleChangeTexture(texture)}} >{`${index}`}</Button>)
                                             })}
                                         </Container>
