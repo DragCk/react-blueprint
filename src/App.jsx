@@ -18,6 +18,7 @@ import MapIcon from '@mui/icons-material/Map.js';
 
 import { changeMode } from "./redux/features/mode.jsx"
 import { clearLines } from "./redux/features/lines.jsx";
+import { setClearCorners } from "./redux/features/corners.jsx";
 
 function App() {
   const [page, setPage] = useState("2D");
@@ -50,6 +51,7 @@ function App() {
     //setMode("Drawing")
     dispatch(changeMode("Drawing"))
     dispatch(clearLines())
+    dispatch(setClearCorners())
   };
 
 

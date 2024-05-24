@@ -4,26 +4,30 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import _ from 'lodash';
 import { Stage, Layer, Line, Circle, Text, Label, Tag } from 'react-konva';
 import { v4 as uuidv4 } from 'uuid';
+
 import { useSelector, useDispatch } from 'react-redux';
 import { setNewLines, setAfterDelete } from "../redux/features/lines"
-
+import { setNewCorner, setUpdateCorner , setUpdateAllCorner } from '../redux/features/corners';
 
 const Floor = () => {
     const [windowWidth, setWindowWidth] = useState(0)
     const [windowHeight, setWindowHeight] = useState(0)
     const [tempLine, setTempLine] = useState(null);
-    const [drawing, setDrawing] = useState(false);
+    const [drawing, setDrawing] = useState(false)
     const [selectedLineIndex, setSelectedLineIndex] = useState(null);
     const [selectedIntersectionPoint, setSelectedIntersectionPoint] = useState({x:0, y:0})
     const [lineMoving, setLineMoving] = useState(false)
     const [tempLinePoints, setTempLinePoints] = useState(null)
+    const [prevPoint, setPrevPoint] = useState(null);
 
     const stageRef = useRef()
 
     const { mode } = useSelector((state) => state.mode)
     const { lines } = useSelector((state) => state.lines)
+    const { corners } = useSelector((state) => state.corners)
     const dispatch = useDispatch()
     
+    const proximityThreshold = 15;
     const gridSize = 20;
     const gridTableSize = 4000
 
@@ -33,35 +37,68 @@ const Floor = () => {
         return [Math.round(x / gridSize) * gridSize, Math.round(y / gridSize) * gridSize];
     };
 
+    const findClosestCorner = (mousePos, corners) => {
+        let closestCorner = null;
+        let minDistance = proximityThreshold;
+    
+        for (const corner of corners) {
+            const [cornerX, cornerY] = corner;
+            const dx = mousePos.x - cornerX;
+            const dy = mousePos.y - cornerY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < minDistance) {
+                closestCorner = corner;
+                minDistance = distance;
+            }
+        }
+    
+        return closestCorner;
+    };
+
     const handleMouseDown = (e) => {
-        if( mode !== "Drawing") return
-        
+        if (mode !== "Drawing") return;
+    
         const stage = e.target?.getStage();
         const mousePos = stage.getRelativePointerPosition();
         const [snapX, snapY] = snapToGrid(mousePos.x, mousePos.y);
-        setDrawing(true);
-        setTempLine([snapX, snapY, snapX, snapY]);
+    
+        let closestCorner = findClosestCorner(mousePos, corners);
         
+        if (closestCorner) {
+            if (prevPoint) {
+                const newLine = [...prevPoint, closestCorner[0], closestCorner[1]];
+                dispatch(setNewLines(newLine));
+                setPrevPoint(null);
+                setTempLine(null);
+                setDrawing(false);
+            } else {
+                setPrevPoint(closestCorner);
+                setTempLine([snapX, snapY, snapX, snapY]);
+                setDrawing(true);
+            }
+
+        } else {
+            const newCorner = [snapX, snapY];
+            dispatch(setNewCorner(newCorner));
+    
+            if (prevPoint) {
+                const newLine = [...prevPoint, snapX, snapY];
+                dispatch(setNewLines(newLine));
+            }
+            setPrevPoint([snapX, snapY]);
+            setTempLine([snapX, snapY, snapX, snapY]);
+            setDrawing(true);
+        }
     };
+    
 
     const handleMouseMove = (e) => {
-        if (!drawing) return
-        
+        if( !drawing ) return
         const stage = e.target?.getStage();
         const mousePos = stage.getRelativePointerPosition();
         const [snapX, snapY]  = snapToGrid(mousePos.x, mousePos.y);
+        
         setTempLine([tempLine[0], tempLine[1], snapX, snapY]);
-    };
-
-    const handleMouseUp = () => {
-        if (!drawing) return
-
-        setDrawing(false);
-        if(tempLine[0] !== tempLine[2] || tempLine[1] !== tempLine[3]) 
-        {
-            dispatch(setNewLines(tempLine))
-        }
-        setTempLine([]);
     };
 
     /* ----------Grid create----------- */
@@ -104,7 +141,13 @@ const Floor = () => {
         return (
             <>
                {length !== "NaN" && length !== "0" ? 
-               (<Label x={midPoint[0]-22} y={midPoint[1]-7} key={`${index}-dimension`} onClick={() => handleDeleteLine(index)} >
+               (<Label 
+                    x={midPoint[0]-22} 
+                    y={midPoint[1]-7} 
+                    key={`${index}-dimension`} 
+                    onClick={() => handleDeleteLine(index)} 
+                    visible={mode === "deleting" ? false : true}
+                >
                     <Tag fill="white" lineJoin="round" cornerRadius={10} />
                     <Text text={`${length}mm`} padding={2} fill="black" />
                 </Label> )
@@ -116,13 +159,41 @@ const Floor = () => {
 
     /* ----------Deleting Lines----------- */
 
-    const handleDeleteLine = (index) => {
-        if ( mode !== "deleting") return
+    const handleDeleteLine = (e, index) => {
+        if (mode !== "deleting") return;
         
-        const newLines = lines.filter((_, i) => i !== index)
-        dispatch(setAfterDelete(newLines))
-        
-    }
+        const { points } = e.target.attrs;
+        const [x1, y1, x2, y2] = points;
+    
+        // Helper function to count occurrences of a point in the lines array
+        const countOccurrences = (array, x, y) => {
+            let count = 0;
+            array.forEach(subArray => {
+                for (let i = 0; i < subArray.length; i += 2) {
+                    if (subArray[i] === x && subArray[i + 1] === y) {
+                        count++;
+                    }
+                }
+            });
+            return count;
+        };
+    
+        // Check if a point occurs more than once in the lines array
+        const occursMoreThanOnce = (x, y) => countOccurrences(lines, x, y) > 1;
+    
+        // Filter out corners that are not part of any remaining lines
+        const newCorners = corners.filter(corner => {
+            const [cx, cy] = corner;
+            return (cx === x1 && cy === y1 && occursMoreThanOnce(x1, y1)) ||
+                   (cx === x2 && cy === y2 && occursMoreThanOnce(x2, y2)) ||
+                   (cx !== x1 || cy !== y1) && (cx !== x2 || cy !== y2);
+        });
+    
+        // Dispatch actions to update corners and lines
+        dispatch(setUpdateAllCorner(newCorners));
+        const newLines = lines.filter((_, i) => i !== index);
+        dispatch(setAfterDelete(newLines));
+    };
     
     // const calculateAngle = (line1, line2) => {
     //     const v1 = { x: line1[2] - line1[0], y: line1[3] - line1[1] };
@@ -153,63 +224,63 @@ const Floor = () => {
     // };
 
     /* ----------Intersections on start & end point-------------- */
-    const findPointIntersections = () => {
-        const overlappingPoints = [];
-        const pointsSet = new Set();
+    // const findPointIntersections = () => {
+    //     const overlappingPoints = [];
+    //     const pointsSet = new Set();
     
-        const addPointIfNotExists = (x, y) => {
-            const pointKey = `${x},${y}`;
-            if (!pointsSet.has(pointKey)) {
-                pointsSet.add(pointKey);
-                overlappingPoints.push({ x, y });
-            }
-        };
+    //     const addPointIfNotExists = (x, y) => {
+    //         const pointKey = `${x},${y}`;
+    //         if (!pointsSet.has(pointKey)) {
+    //             pointsSet.add(pointKey);
+    //             overlappingPoints.push({ x, y });
+    //         }
+    //     };
     
-        lines.forEach((line1, i) => {
-            const [x1, y1, x2, y2] = line1;
+    //     lines.forEach((line1, i) => {
+    //         const [x1, y1, x2, y2] = line1;
     
-            lines.slice(i + 1).forEach((line2) => {
-                const [x3, y3, x4, y4] = line2;
+    //         lines.slice(i + 1).forEach((line2) => {
+    //             const [x3, y3, x4, y4] = line2;
     
-                // Check if start point ovelaps
-                if ((x1 === x3 && y1 === y3) || (x1 === x4 && y1 === y4)) {
-                    addPointIfNotExists(x1, y1);
-                }
+    //             // Check if start point ovelaps
+    //             if ((x1 === x3 && y1 === y3) || (x1 === x4 && y1 === y4)) {
+    //                 addPointIfNotExists(x1, y1);
+    //             }
     
-                // Check if end point ovelaps
-                if ((x2 === x3 && y2 === y3) || (x2 === x4 && y2 === y4)) {
-                    addPointIfNotExists(x2, y2);
-                }
-            });
-        });
+    //             // Check if end point ovelaps
+    //             if ((x2 === x3 && y2 === y3) || (x2 === x4 && y2 === y4)) {
+    //                 addPointIfNotExists(x2, y2);
+    //             }
+    //         });
+    //     });
     
-        return overlappingPoints;
-    }
+    //     return overlappingPoints;
+    // }
 
-    function findUniqueVertices() {
-        const verticesSet = new Set();
+    // function findUniqueVertices() {
+    //     const verticesSet = new Set();
       
-        lines.forEach(([x1, y1, x2, y2]) => {
-          verticesSet.add(`${x1},${y1}`);
-          verticesSet.add(`${x2},${y2}`);
-        });
+    //     lines.forEach(([x1, y1, x2, y2]) => {
+    //       verticesSet.add(`${x1},${y1}`);
+    //       verticesSet.add(`${x2},${y2}`);
+    //     });
       
-        const uniqueVertices = Array.from(verticesSet).map(vertex => {
-          const [x, y] = vertex.split(',').map(Number);
-          return { x, y };
-        });
+    //     const uniqueVertices = Array.from(verticesSet).map(vertex => {
+    //       const [x, y] = vertex.split(',').map(Number);
+    //       return { x, y };
+    //     });
       
-        return uniqueVertices;
-    }
+    //     return uniqueVertices;
+    // }
       
-    const uniqueVertices = findUniqueVertices();
-    //console.log("所有唯一的頂點座標:", uniqueVertices);
+    // const uniqueVertices = findUniqueVertices();
+    // //console.log("所有唯一的頂點座標:", uniqueVertices);
 
-    const points = findPointIntersections()
+    // const points = findPointIntersections()
 
-    /* ----------Point dragging----------- */
+    /* ----------Corners dragging----------- */
     
-    const handleIntersectionMouseDown = (e) => {
+    const hadleCornerOnDragStart = (e) => {
         if(mode !== "Moving") return
             
         const {x, y} = e.target?.attrs
@@ -243,7 +314,7 @@ const Floor = () => {
     } 
 
 
-    const hadleIntersectionMouseUp = (e) => {
+    const hadleCornerOnDragEnd = (e,index) => {
         
         if (!lineMoving) return;
     
@@ -264,107 +335,52 @@ const Floor = () => {
 
             return line;
         });
-    
+        
+        dispatch(setUpdateCorner({index:index,x:snapX,y:snapY}))
+        
         dispatch(setAfterDelete(updateLines));
         setLineMoving(false);
     }
 
-
+    
 
     /* ----------Intersections----------- */
-    const findIntersections = () => {
-        const intersections = [];
+    // const findIntersections = () => {
+    //     const intersections = [];
       
-        lines.forEach((line1, i) => {
-          const [x1, y1, x2, y2] = line1;
+    //     lines.forEach((line1, i) => {
+    //       const [x1, y1, x2, y2] = line1;
       
-          lines.slice(i + 1).forEach((line2) => {
-            const [x3, y3, x4, y4] = line2;
+    //       lines.slice(i + 1).forEach((line2) => {
+    //         const [x3, y3, x4, y4] = line2;
       
-            const denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+    //         const denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
       
-            if (denominator === 0) return;
+    //         if (denominator === 0) return;
       
-            const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denominator;
-            const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denominator;
+    //         const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denominator;
+    //         const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denominator;
       
-            if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
-              const intersectionX = x1 + t * (x2 - x1);
-              const intersectionY = y1 + t * (y2 - y1);
-              const intersectionPoint = { x: intersectionX, y: intersectionY };
+    //         if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+    //           const intersectionX = x1 + t * (x2 - x1);
+    //           const intersectionY = y1 + t * (y2 - y1);
+    //           const intersectionPoint = { x: intersectionX, y: intersectionY };
       
-              // 檢查是否已存在相同的交點，如果不存在則加入 intersections 中
-              if (!intersections.some((point) => point.x === intersectionX && point.y === intersectionY)) {
-                intersections.push(intersectionPoint);
-              }
-            }
-          });
-        });
+    //           // 檢查是否已存在相同的交點，如果不存在則加入 intersections 中
+    //           if (!intersections.some((point) => point.x === intersectionX && point.y === intersectionY)) {
+    //             intersections.push(intersectionPoint);
+    //           }
+    //         }
+    //       });
+    //     });
         
-        return intersections;
-    };
+    //     return intersections;
+    // };
 
-    const intersection = findIntersections()
-
-    /* ----------Line Dragging by point----------- */
-    const handleDragStart = (index) => {
-        if( mode !== "Moving") return
-        
-        setSelectedLineIndex(index);
-        
-    };
-
-    const handleOnDrag = (e, position) => {
-        if (mode !== "Moving") return;
-        
-
-        const { x, y } = e.target?.attrs;
-        const updatedLines = [...lines];
-
-        const updateLine = (index, startX, startY, endX, endY) => {
-            updatedLines[index] = [startX, startY, endX, endY];
-        };
-       
-        const currentLine = updatedLines[selectedLineIndex];
-        const [x1, y1, x2, y2] = currentLine;
-
-        if (position === "start") {
-            updateLine(selectedLineIndex, x, y, x2, y2);
-        } else if (position === "end") {
-            updateLine(selectedLineIndex, x1, y1, x, y);
-        }
-
-        dispatch(setAfterDelete(updatedLines));
-        
-    }
-
-    const handleDragEnd = (e, position) => {
-        if (mode !== "Moving") return;
-        
-        const { x, y } = e.target?.attrs;
-        const [snapX, snapY] = snapToGrid(x, y);
-        const updatedLines = [...lines];
-    
-        const updateLine = (index, newX1, newY1, newX2, newY2) => {
-            updatedLines[index] = [newX1, newY1, newX2, newY2];
-        };
-    
-        const currentLine = updatedLines[selectedLineIndex];
-        const [x1, y1, x2, y2] = currentLine;
-    
-        if (position === "start") {
-            updateLine(selectedLineIndex, snapX, snapY, x2, y2);
-        } else if (position === "end") {
-            updateLine(selectedLineIndex, x1, y1, snapX, snapY);
-        }
-    
-        dispatch(setAfterDelete(updatedLines));
-        setSelectedLineIndex(null);
-        
-    }
+    // const intersection = findIntersections()
 
    
-    /* ----------Line Dragging by Body----------- */
+    /* ----------Line Dragging----------- */
     const handleLineMoveStart = (e) => {
         
         const [x1,y1,x2,y2] = e.target.attrs.points
@@ -372,7 +388,7 @@ const Floor = () => {
     }
 
 
-    const handleLineMove = (e) => {
+    const handleLineMoveEnd = (e) => {
         const { x, y } = e.target?.position();
         const [snapX, snapY] = snapToGrid(x, y);
     
@@ -408,8 +424,17 @@ const Floor = () => {
             return line;
         });
     
+        const updateCorners = corners.map(corner => {
+            const [x,y] = corner
+            const {x1,y1,x2,y2} = tempLinePoints
+            if(x===x1 && y === y1 || x===x2 && y===y2) return [x+snapX, y+snapY]
+
+            return corner
+        })
+        console.log(updateCorners)
         e.target.position({ x: 0, y: 0 });
         setTempLinePoints(null);
+        dispatch(setUpdateAllCorner(updateCorners))
         dispatch(setAfterDelete(updateLines));
     }
 
@@ -441,7 +466,6 @@ const Floor = () => {
             height={window.innerHeight} 
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
             ref={stageRef}
             draggable={mode === "Moving" ? true : false}
             offsetX={calculateStageOffSet(windowWidth)}
@@ -467,10 +491,10 @@ const Floor = () => {
                             points={line}
                             stroke="blue"
                             strokeWidth={5}
-                            onClick={() => handleDeleteLine(index)}
+                            onClick={(e) => handleDeleteLine(e,index)}
                             draggable={mode === "Moving" ? true : false}
                             onDragStart={handleLineMoveStart}
-                            onDragEnd={e => handleLineMove(e,index)}
+                            onDragEnd={e => handleLineMoveEnd(e,index)}
                             hitStrokeWidth={10}
                             perfectDrawEnabled={false}
                         />
@@ -480,20 +504,20 @@ const Floor = () => {
                 ))}
                 {/* ------------Line drawing---------------- */}
 
-                {/* ---------------Start/end point intersection drawing---------------- */}
-                {uniqueVertices.map((point, index) => (
+                {/* ---------------Corners drawing---------------- */}
+                {corners.map((corner, index) => (
                     <Circle 
                         key={`${index}-points`} 
-                        x={point.x}
-                        y={point.y} 
+                        x={corner[0]}
+                        y={corner[1]} 
                         radius={6} 
                         fill="red" 
                         draggable={mode === "Moving" ? true : false}
-                        onDragStart={handleIntersectionMouseDown}
-                        onDragEnd={hadleIntersectionMouseUp}
+                        onDragStart={hadleCornerOnDragStart}
+                        onDragEnd={(e) => hadleCornerOnDragEnd(e,index)}
                     />
                 ))}
-                {/* ---------------Start/end point intersection drawing---------------- */}
+                {/* ---------------Corners drawing---------------- */}
 
 
                 {/* {lines.slice(0, -1).map((line, index) => (
