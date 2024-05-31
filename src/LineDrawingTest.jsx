@@ -1,68 +1,116 @@
-import React, { useState } from 'react';
-import { Stage, Layer, Circle, Line } from 'react-konva';
+import React, { useState } from "react";
+import { render } from "react-dom";
+import { Stage, Layer, Line, Rect } from "react-konva";
 
 const App = () => {
-  const [circles, setCircles] = useState([]);
-  const [lines, setLines] = useState([]);
-  const [tempLine, setTempLine] = useState(null)
-  const [prevPoint, setPrevPoint] = useState(null);
-  const radius = 10;
-  const proximityThreshold = 15; // Adjust this value as needed for proximity checking
+  const [points, setPoints] = useState([]);
+  const [curMousePos, setCurMousePos] = useState([0, 0]);
+  const [isMouseOverStartPoint, setIsMouseOverStartPoint] = useState(false);
+  const [isFinished, setIsFinished] = useState(false);
 
-  const handleMouseDown = (e) => {
-    const stage = e.target.getStage();
-    const mousePos = stage.getRelativePointerPosition();
-    let closestCircle = null;
-    let minDistance = proximityThreshold;
+  const getMousePos = stage => {
+    return [stage.getPointerPosition().x, stage.getPointerPosition().y];
+  };
 
-    // Find the closest circle
-    for (const circle of circles) {
-      const dx = mousePos.x - circle[0];
-      const dy = mousePos.y - circle[1];
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      if (distance < minDistance) {
-        closestCircle = circle;
-        minDistance = distance;
-      }
+  const handleClick = event => {
+    const stage = event.target.getStage();
+    const mousePos = getMousePos(stage);
+
+    if (isFinished) {
+      return;
     }
-
-    // If a circle is close enough, start the line from that circle
-    if (closestCircle) {
-      if (prevPoint) {
-        const newLine = [...prevPoint, closestCircle[0], closestCircle[1]];
-        setLines((prevLines) => [...prevLines, newLine]);
-        setPrevPoint(null);
-      } else {
-        setPrevPoint(closestCircle);
-      }
-      
+    if (isMouseOverStartPoint && points.length >= 3) {
+      setIsFinished(true);
     } else {
-      // Otherwise, create a new circle and start a new line from there
-      const newCircle = [mousePos.x, mousePos.y];
-      setCircles((prevCircles) => [...prevCircles, newCircle]);
-
-      if (prevPoint) {
-        const newLine = [...prevPoint, mousePos.x, mousePos.y];
-        setLines((prevLines) => [...prevLines, newLine]);
-      }
-      setPrevPoint([mousePos.x, mousePos.y]);
+      setPoints([...points, mousePos]);
     }
   };
 
+  const handleMouseMove = event => {
+    const stage = event.target.getStage();
+    const mousePos = getMousePos(stage);
+    setCurMousePos(mousePos);
+  };
+
+  const handleMouseOverStartPoint = event => {
+    if (isFinished || points.length < 3) return;
+    event.target.scale({ x: 2, y: 2 });
+    setIsMouseOverStartPoint(true);
+  };
+
+  const handleMouseOutStartPoint = event => {
+    event.target.scale({ x: 1, y: 1 });
+    setIsMouseOverStartPoint(false);
+  };
+
+  const handleDragStartPoint = event => {
+    console.log("start", event);
+  };
+
+  const handleDragMovePoint = event => {
+    const index = event.target.index - 1;
+    const pos = [event.target.attrs.x, event.target.attrs.y];
+    const newPoints = [...points];
+    newPoints[index] = pos;
+    setPoints(newPoints);
+  };
+
+  const handleDragEndPoint = event => {
+    console.log("end", event);
+  };
+
+  const flattenedPoints = points
+    .concat(isFinished ? [] : curMousePos)
+    .reduce((a, b) => a.concat(b), []);
+
+  console.log(points)
   return (
     <Stage
       width={window.innerWidth}
       height={window.innerHeight}
-      onMouseDown={handleMouseDown}
+      onMouseDown={handleClick}
+      onMouseMove={handleMouseMove}
     >
       <Layer>
-        {lines.map((line, index) => (
-          <Line key={index} points={line} draggable stroke="red" strokeWidth={5} />
-        ))}
-        {circles.map((circle, index) => (
-          <Circle key={index} x={circle[0]} y={circle[1]} radius={radius} fill="blue" />
-        ))}
-        {console.log(lines)}
+        <Line
+          points={flattenedPoints}
+          stroke="black"
+          strokeWidth={5}
+          closed={isFinished}
+          draggable
+        />
+        
+        
+        {points.map((point, index) => {
+          const width = 6;
+          const x = point[0] - width / 2;
+          const y = point[1] - width / 2;
+          const startPointAttr =
+            index === 0
+              ? {
+                  hitStrokeWidth: 12,
+                  onMouseOver: handleMouseOverStartPoint,
+                  onMouseOut: handleMouseOutStartPoint
+                }
+              : null;
+          return (
+            <Rect
+              key={index}
+              x={x}
+              y={y}
+              width={width}
+              height={width}
+              fill="white"
+              stroke="black"
+              strokeWidth={3}
+              onDragStart={handleDragStartPoint}
+              onDragMove={handleDragMovePoint}
+              onDragEnd={handleDragEndPoint}
+              draggable
+              {...startPointAttr}
+            />
+          );
+        })}
       </Layer>
     </Stage>
   );

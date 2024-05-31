@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import _ from 'lodash';
 import { Stage, Layer, Line, Circle, Text, Label, Tag } from 'react-konva';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,8 +13,7 @@ const Floor = () => {
     const [windowWidth, setWindowWidth] = useState(0)
     const [windowHeight, setWindowHeight] = useState(0)
     const [tempLine, setTempLine] = useState(null);
-    const [drawing, setDrawing] = useState(false)
-    const [selectedLineIndex, setSelectedLineIndex] = useState(null);
+    const [drawing, setDrawing] = useState(false) 
     const [selectedIntersectionPoint, setSelectedIntersectionPoint] = useState({x:0, y:0})
     const [lineMoving, setLineMoving] = useState(false)
     const [tempLinePoints, setTempLinePoints] = useState(null)
@@ -57,9 +56,10 @@ const Floor = () => {
 
     const handleMouseDown = (e) => {
         if (mode !== "Drawing") return;
-    
+        
         const stage = e.target?.getStage();
         const mousePos = stage.getRelativePointerPosition();
+        console.log(mousePos)
         const [snapX, snapY] = snapToGrid(mousePos.x, mousePos.y);
     
         let closestCorner = findClosestCorner(mousePos, corners);
@@ -123,6 +123,7 @@ const Floor = () => {
 
         return grid;
     };
+
 
 
     /* ----------Distance of Line----------- */
@@ -282,7 +283,7 @@ const Floor = () => {
     
     const hadleCornerOnDragStart = (e) => {
         if(mode !== "Moving") return
-            
+       
         const {x, y} = e.target?.attrs
         setSelectedIntersectionPoint({x, y})
         setLineMoving(true)
@@ -440,7 +441,6 @@ const Floor = () => {
 
     //Line position solve with https://stackoverflow.com/questions/73631342/konva-line-drag
        
-
     /* ----------Calculations----------- */
 
     const calculateStageOffSet = (window) => {
@@ -471,17 +471,12 @@ const Floor = () => {
             offsetX={calculateStageOffSet(windowWidth)}
             offsetY={calculateStageOffSet(windowHeight)}
         >
-            <Layer
-                listening={false}
-            >
+            <Layer >
                 {/* ------------Default Grid and center drawing---------------- */}
-                {lines && drawGrid()}
+                {drawGrid()}
         
                 <Circle x={0} y={0} radius={5} fill="black"/>
                 {/* ------------Default Grid and center drawing---------------- */}
-            </Layer>
-
-            <Layer >
 
                 {/* ------------Line drawing---------------- */}
                 {lines.map((line, index) => (
@@ -527,7 +522,6 @@ const Floor = () => {
                 {/* {intersection.map((point, i) => (
                     <Circle key={`${i}-intersection`} x={point.x} y={point.y} radius={5} fill="red" />
                 ))} */}
-                
                 
 
                 {/* ------------Templine drawing---------------- */}
