@@ -35,7 +35,7 @@ const App = () => {
       } else {
         setPrevPoint(closestCircle);
       }
-      
+
     } else {
       // Otherwise, create a new circle and start a new line from there
       const newCircle = [mousePos.x, mousePos.y];
