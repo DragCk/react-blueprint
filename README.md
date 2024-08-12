@@ -9,12 +9,12 @@ Currently, two official plugins are available:
 
 # Install
 
-git clone https://github.com/DragCk/react-blueprint.git
-
-cd react-blueprint
-
-npm install
-
-npm create vite
-
-npm run dev
+    git clone https://github.com/DragCk/react-blueprint.git
+    
+    cd react-blueprint
+    
+    npm install
+    
+    npm create vite
+    
+    npm run dev
